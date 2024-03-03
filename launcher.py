@@ -1,41 +1,52 @@
-import time
+import os
 
-import torch
-from PIL import Image, ImageDraw
-from torchvision import models
-from torchvision.models.detection import FasterRCNN_ResNet50_FPN_Weights
-from torchvision.transforms import Compose, ToTensor
+import cv2
+
+from training.training import Training
+from ultralytics import YOLO
 
 
 def launcher():
-    model = models.detection.fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.COCO_V1)
-    model.eval()
+    # training
+    # model = YOLO("yolov8n.yaml")
+    # model.train(data="config.yaml", epochs=70)
 
-    image = Image.open(r"C:\Licenta\inregistrari\frame.png")
+    # prediction
+    VIDEOS_DIR = r'C:\Licenta\inregistrari'
 
-    transform = Compose([
-        ToTensor()
-    ])
+    video_path = os.path.join(VIDEOS_DIR, 'vlc-record-2024-02-13-14h14m13s-rtsp___192.168.82.149_live-.mp4')
+    video_path_out = '{}_out.mp4'.format(video_path)
 
-    transformed_img = transform(image)
+    cap = cv2.VideoCapture(video_path)
+    ret, frame = cap.read()
+    H, W, _ = frame.shape
+    out = cv2.VideoWriter(video_path_out, cv2.VideoWriter_fourcc(*'MP4V'), int(cap.get(cv2.CAP_PROP_FPS)), (W, H))
 
-    print("detection begins")
-    start_time = time.time()
-    with torch.no_grad():
-        prediction = model([transformed_img])
-    end_time = time.time()
-    print("detection ends: " + str(end_time - start_time))
+    model_path = os.path.join('.', 'runs', 'detect', 'train5', 'weights', 'last.pt')
 
-    vehicle_labels = [2, 3, 5, 7]
-    for element in range(len(prediction[0]['labels'])):
-        if prediction[0]['labels'][element].item() in vehicle_labels:
-            box = prediction[0]['boxes'][element].numpy()
-            score = prediction[0]['scores'][element].item()
-            if score > 0.5:
-                draw = ImageDraw.Draw(image)
-                draw.rectangle((box[0], box[1], box[2], box[3]), outline="red", width=3)
+    # Load a model
+    model = YOLO(model_path)
 
-    image.show()
+    threshold = 0.1
+
+    while ret:
+
+        results = model(frame)[0]
+
+        for result in results.boxes.data.tolist():
+            x1, y1, x2, y2, score, class_id = result
+
+            if score > threshold:
+                cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 4)
+                cv2.putText(frame, results.names[int(class_id)].upper(), (int(x1), int(y1 - 10)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 0), 3, cv2.LINE_AA)
+
+        out.write(frame)
+        ret, frame = cap.read()
+
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
