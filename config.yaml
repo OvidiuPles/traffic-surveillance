@@ -1,8 +1,0 @@
-path: C:/Licenta/data
-train: images/train
-val: images/train
-
-
-# Classes
-names:
-  0: vehicle

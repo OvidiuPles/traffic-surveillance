@@ -1,0 +1,13 @@
+path: C:/Licenta/data
+train: images/train
+val: images/train
+
+
+# Classes
+names:
+  0: small car
+  1: truck
+  2: bus
+  3: van
+  4: motorcycle
+  5: bicycle
