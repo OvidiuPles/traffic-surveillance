@@ -1,8 +1,12 @@
+import cv2
+
+from ultralytics import YOLO
+
+
 def launcher():
     # training
-    pass
-    # model = YOLO("yolov8n.yaml")
-    # model.train(data=r"source/config.yaml", epochs=10, name='moto_train')
+    model = YOLO("yolov8n.yaml")
+    model.train(data=r"source/config.yaml", epochs=1)
 
     # prediction
     # VIDEOS_DIR = r'C:\Licenta\raw_data\videos'
