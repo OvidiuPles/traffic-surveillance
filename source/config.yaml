@@ -1,4 +1,4 @@
-path: C:/Licenta/data
+path: C:/Licenta/traffic-surveillance-backend/data/data
 train: images/train
 val: images/train
 
