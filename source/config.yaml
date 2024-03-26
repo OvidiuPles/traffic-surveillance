@@ -1,7 +1,6 @@
-path: C:/Licenta/traffic-surveillance-backend/data/test_data
+path: C:/Licenta/traffic-surveillance-backend/data/data
 train: images/train
 val: images/val
-
 
 # Classes
 names:
