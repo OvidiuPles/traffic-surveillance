@@ -77,40 +77,39 @@ class Analyzer:
         threshold = 0.5
         while True:
             ret, frame = cap.read()
-            if current_frame % 2 == 0:
-                if frame is None:
-                    break
+            if frame is None:
+                break
 
-                results = model(frame)[0]
+            results = model(frame)[0]
 
-                for result in results.boxes.data.tolist():
-                    x1, y1, x2, y2, score, class_id = result
-                    if current_frame > 0:
-                        max_iou = 0
-                        matching_vehicle = None
-                        for vehicle in previous_vehicles:
-                            iou = self.calculate_iou([vehicle.box[0], vehicle.box[1], vehicle.box[2], vehicle.box[3]], [x1, y1, x2, y2])
-                            if iou > max_iou:
-                                max_iou = iou
-                                matching_vehicle = vehicle
-                        if max_iou > 0.4:
-                            vehicle_id = matching_vehicle.id
-                            previous_vehicles.remove(matching_vehicle)
-                            previous_vehicles.append(Vehicle(vehicle_id, [x1, y1, x2, y2]))
-                        else:
-                            vehicle_id = random.randint(1, 1000)
-                            previous_vehicles.append(Vehicle(vehicle_id, [x1, y1, x2, y2]))
+            for result in results.boxes.data.tolist():
+                x1, y1, x2, y2, score, class_id = result
+                if current_frame > 0:
+                    max_iou = 0
+                    matching_vehicle = None
+                    for vehicle in previous_vehicles:
+                        iou = self.calculate_iou([vehicle.box[0], vehicle.box[1], vehicle.box[2], vehicle.box[3]], [x1, y1, x2, y2])
+                        if iou > max_iou:
+                            max_iou = iou
+                            matching_vehicle = vehicle
+                    if max_iou > 0.4:
+                        vehicle_id = matching_vehicle.id
+                        previous_vehicles.remove(matching_vehicle)
+                        previous_vehicles.append(Vehicle(vehicle_id, [x1, y1, x2, y2]))
                     else:
                         vehicle_id = random.randint(1, 1000)
-                        previous_vehicles.append(Vehicle(id=vehicle_id, box=[x1, y1, x2, y2]))
+                        previous_vehicles.append(Vehicle(vehicle_id, [x1, y1, x2, y2]))
+                else:
+                    vehicle_id = random.randint(1, 1000)
+                    previous_vehicles.append(Vehicle(id=vehicle_id, box=[x1, y1, x2, y2]))
 
-                    if score > threshold:
-                        cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), class_colors[0], 4)
-                        cv2.putText(frame, results.names[int(class_id)].upper() + " ID: " + str(vehicle_id), (int(x1), int(y1 - 10)),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 1.3, class_colors[0], 3, cv2.LINE_AA)
+                if score > threshold:
+                    cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), class_colors[0], 4)
+                    cv2.putText(frame, results.names[int(class_id)].upper() + " ID: " + str(vehicle_id), (int(x1), int(y1 - 10)),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1.3, class_colors[0], 3, cv2.LINE_AA)
 
-                frame = cv2.resize(frame, (1200, 700))
-                cv2.imshow('Stream', frame)
+            frame = cv2.resize(frame, (1200, 700))
+            cv2.imshow('Stream', frame)
             current_frame += 1
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
