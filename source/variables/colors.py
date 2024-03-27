@@ -1,4 +1,4 @@
-colors = {
+class_colors = {
     0: (255, 255, 0),  # small car
     1: (0, 255, 255),  # truck
     2: (0, 0, 255),  # bus
