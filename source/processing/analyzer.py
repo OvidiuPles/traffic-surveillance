@@ -58,12 +58,9 @@ class Analyzer:
 
         for result in results.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = result
-            start_time = time.perf_counter()
-            vehicle_id = self.assign_vehicle_id(vehicle_box=[x1, y1, x2, y2])
-            stop_time = time.perf_counter()
-            print("vehicle id assigned in: " + str(stop_time-start_time))
 
             if score > self.model_confidence:
+                vehicle_id = self.assign_vehicle_id(vehicle_box=[x1, y1, x2, y2])
                 cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), class_colors[0], 4)
                 cv2.putText(frame, results.names[int(class_id)].upper() + " ID: " + str(vehicle_id) + ";x1=" + str(int(x1)) + ";y1=" + str(int(y1)),
                             (int(x1), int(y1 - 10)),
