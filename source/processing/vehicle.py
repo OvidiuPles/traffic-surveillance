@@ -1,4 +1,8 @@
 class Vehicle:
-    def __init__(self, id, box):
+    def __init__(self, x1, y1, x2, y2, id, frame_depth=0):
         self.id = id
-        self.box = box
+        self.x1 = x1
+        self.x2 = x2
+        self.y1 = y1
+        self.y2 = y2
+        self.frame_depth = frame_depth
