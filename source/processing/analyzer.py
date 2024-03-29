@@ -1,4 +1,4 @@
-import random
+import time
 
 import cv2
 import numpy as np
@@ -9,14 +9,14 @@ from source.variables.colors import class_colors
 
 
 class Analyzer:
-    def __init__(self):
+    def __init__(self, confidence=0.5):
         # model_path = os.path.join('.', '.', 'runs', 'detect', 'train15', 'weights', 'last.pt')
         self.model = YOLO("yolov8n.pt")
-        self.model_confidence = 0.5
-        self.current_frame = 0
+        self.model_confidence = confidence
         self.previous_vehicles = []
+        self.unassigned_id = 0
 
-    def process_video(self, input_path, output_path=None):
+    def process_video(self, input_path, output_path=None, tracking_depth=5):
         if output_path is None:
             path = input_path.split(".mp4")[0:-1]
             output_path = "\\".join(path) + "_processed.mp4"  # same dir as input
@@ -28,7 +28,6 @@ class Analyzer:
 
         while ret:
             frame = self.process_frame(frame)
-            self.current_frame += 1
             out.write(frame)
             ret, frame = cap.read()
 
@@ -36,7 +35,7 @@ class Analyzer:
         out.release()
         cv2.destroyAllWindows()
 
-    def process_stream(self, input_path):
+    def process_stream(self, input_path, tracking_depth=5):
         cap = cv2.VideoCapture(input_path)
 
         while True:
@@ -47,7 +46,6 @@ class Analyzer:
             frame = self.process_frame(frame)
             frame = cv2.resize(frame, (1200, 700))
             cv2.imshow('Stream', frame)
-            self.current_frame += 1
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -60,30 +58,39 @@ class Analyzer:
 
         for result in results.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = result
-            if self.current_frame > 0:
-                max_iou = 0
-                matching_vehicle = None
-                for vehicle in self.previous_vehicles:
-                    iou = self.calculate_iou([vehicle.box[0], vehicle.box[1], vehicle.box[2], vehicle.box[3]], [x1, y1, x2, y2])
-                    if iou > max_iou:
-                        max_iou = iou
-                        matching_vehicle = vehicle
-                if max_iou > 0.4:
-                    vehicle_id = matching_vehicle.id
-                    self.previous_vehicles.remove(matching_vehicle)
-                    self.previous_vehicles.append(Vehicle(vehicle_id, [x1, y1, x2, y2]))
-                else:
-                    vehicle_id = random.randint(1, 1000)
-                    self.previous_vehicles.append(Vehicle(vehicle_id, [x1, y1, x2, y2]))
-            else:
-                vehicle_id = random.randint(1, 1000)
-                self.previous_vehicles.append(Vehicle(id=vehicle_id, box=[x1, y1, x2, y2]))
+            start_time = time.perf_counter()
+            vehicle_id = self.assign_vehicle_id(vehicle_box=[x1, y1, x2, y2])
+            stop_time = time.perf_counter()
+            print("vehicle id assigned in: " + str(stop_time-start_time))
 
             if score > self.model_confidence:
                 cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), class_colors[0], 4)
-                cv2.putText(frame, results.names[int(class_id)].upper() + " ID: " + str(vehicle_id), (int(x1), int(y1 - 10)),
+                cv2.putText(frame, results.names[int(class_id)].upper() + " ID: " + str(vehicle_id) + ";x1=" + str(int(x1)) + ";y1=" + str(int(y1)),
+                            (int(x1), int(y1 - 10)),
                             cv2.FONT_HERSHEY_SIMPLEX, 1.3, class_colors[0], 3, cv2.LINE_AA)
         return frame
+
+    def assign_vehicle_id(self, vehicle_box):
+        x1, y1, x2, y2 = vehicle_box
+        max_iou = 0
+        matching_vehicle = None
+        for vehicle in self.previous_vehicles:
+            if abs(vehicle.box[0] - x1) < 200 and abs(vehicle.box[1] - y1) < 400:  # calculate iou only if the potential matching vehicle is nearby
+                iou = self.calculate_iou([vehicle.box[0], vehicle.box[1], vehicle.box[2], vehicle.box[3]], [x1, y1, x2, y2])
+                if iou > max_iou:
+                    max_iou = iou
+                    matching_vehicle = vehicle
+        if max_iou > 0.3:
+            vehicle_id = matching_vehicle.id
+            self.previous_vehicles.remove(matching_vehicle)
+            self.previous_vehicles.append(Vehicle(vehicle_id, [x1, y1, x2, y2]))
+        else:
+            vehicle_id = self.unassigned_id
+            self.unassigned_id += 1
+            if self.unassigned_id >= 100:
+                self.unassigned_id = 0
+            self.previous_vehicles.append(Vehicle(vehicle_id, [x1, y1, x2, y2]))
+        return vehicle_id
 
     @staticmethod
     def calculate_iou(box1, box2):
