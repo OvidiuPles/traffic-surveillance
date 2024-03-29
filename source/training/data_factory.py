@@ -52,8 +52,8 @@ class DataFactory:
         cap.release()
         print("Done saving frames.")
 
-# DataFactory.video_to_frames(video_path=r'C:\Licenta\traffic-surveillance-backend\data\raw_data\videos\video_5_night.mp4',
-#                             output_path=r'C:\Licenta\traffic-surveillance-backend\data\raw_data\videos\night_to_frames',
+# DataFactory.video_to_frames(video_path=r'C:\Licenta\backup\data\raw_data\videos\video_5_night_processed.mp4',
+#                             output_path=r'C:\Licenta\backup\data\raw_data\videos\ceee',
 #                             n=1)
 
 # DataFactory.modify_class_labels(r"C:\Licenta\traffic-surveillance-backend\data\data_test\labels\train\motorcycle", 1, 4)
