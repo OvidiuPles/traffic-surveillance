@@ -4,7 +4,8 @@ import cv2
 from ultralytics import YOLO
 
 from source.processing.vehicle import Vehicle
-from source.variables.colors import class_colors
+from source.utils.colors import class_colors
+from source.utils.variables import PIXELS_UPPER_CNT_LINE, STREAM_WIDTH, STREAM_HEIGHT, MAX_DIST_TRACKING_X, MAX_DIST_TRACKING_Y, MAX_ID
 
 
 class Analyzer:
@@ -17,6 +18,10 @@ class Analyzer:
         # self.model = YOLO("yolov8n.pt")
         self.previous_vehicles = []
         self.unassigned_id = 0
+        self.image_height = 0
+        self.image_width = 0
+        self.counting_line_height = 0
+        self.counted_vehicles = 0
 
     def process_video(self, input_path, output_path=None):
         if output_path is None:
@@ -25,12 +30,15 @@ class Analyzer:
 
         cap = cv2.VideoCapture(input_path)
         ret, frame = cap.read()
-        h, w, _ = frame.shape
-        out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'MP4V'), int(cap.get(cv2.CAP_PROP_FPS)), (w, h))
+        self.image_height, self.image_width, _ = frame.shape
+        self.counting_line_height = int(self.image_height / 2) - PIXELS_UPPER_CNT_LINE
+        out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'MP4V'), int(cap.get(cv2.CAP_PROP_FPS)), (self.image_width, self.image_height))
 
         while ret:
+            self.count_vehicles()
             frame = self.process_frame(frame)
             self.update_previous_vehicles()
+
             out.write(frame)
             ret, frame = cap.read()
 
@@ -40,15 +48,21 @@ class Analyzer:
 
     def process_stream(self, input_path):
         cap = cv2.VideoCapture(input_path)
-
+        got_image_size = False
         while True:
             ret, frame = cap.read()
             if frame is None:
                 break
+            if not got_image_size:
+                self.image_height, self.image_width, _ = frame.shape
+                self.counting_line_height = int(self.image_height / 2) - PIXELS_UPPER_CNT_LINE
+                got_image_size = True
+
+            self.count_vehicles()
             frame = self.process_frame(frame)
             self.update_previous_vehicles()
 
-            frame = cv2.resize(frame, (1200, 700))
+            frame = cv2.resize(frame, (STREAM_WIDTH, STREAM_HEIGHT))
             cv2.imshow('Stream', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -67,6 +81,12 @@ class Analyzer:
                 cv2.putText(frame, results.names[int(class_id)].upper() + " ID: " + str(vehicle_id),
                             (int(x1), int(y1 - 10)),
                             cv2.FONT_HERSHEY_SIMPLEX, 1.3, class_colors[class_id], 3, cv2.LINE_AA)
+
+                # counting line
+                cv2.line(frame, (0, self.counting_line_height), (int(self.image_width), self.counting_line_height), (0, 255, 0), 7)
+                cv2.putText(frame, "counted vehicles: " + str(self.counted_vehicles),
+                            (int(self.image_width - 900), self.counting_line_height - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 2.2, class_colors[4], 3, cv2.LINE_AA)
         return frame
 
     def assign_vehicle_id(self, vehicle_box):
@@ -74,7 +94,8 @@ class Analyzer:
         max_iou = 0
         matching_vehicle = None
         for vehicle in self.previous_vehicles:
-            if abs(vehicle.x1 - x1) < 200 and abs(vehicle.y1 - y1) < 400:  # calculate iou only if the potential matching vehicle is nearby
+            if (abs(vehicle.x1 - x1) < MAX_DIST_TRACKING_X
+                    and abs(vehicle.y1 - y1) < MAX_DIST_TRACKING_Y):  # calculate iou only if the potential matching vehicle is nearby
                 iou = self.calculate_iou([vehicle.x1, vehicle.y1, vehicle.x2, vehicle.y2], [x1, y1, x2, y2])
                 if iou > max_iou:
                     max_iou = iou
@@ -82,14 +103,24 @@ class Analyzer:
         if max_iou > 0.3:
             vehicle_id = matching_vehicle.id
             self.previous_vehicles.remove(matching_vehicle)
-            self.previous_vehicles.append(Vehicle(x1, y1, x2, y2, vehicle_id))
+            self.previous_vehicles.append(Vehicle(x1, y1, x2, y2, vehicle_id, is_counted=matching_vehicle.is_counted))
         else:
             vehicle_id = self.unassigned_id
             self.unassigned_id += 1
-            if self.unassigned_id >= 100:
+            if self.unassigned_id >= MAX_ID:
                 self.unassigned_id = 0
             self.previous_vehicles.append(Vehicle(x1, y1, x2, y2, vehicle_id))
         return vehicle_id
+
+    def count_vehicles(self):
+        for vehicle in self.previous_vehicles:
+            if not vehicle.is_counted:
+                if self.vehicle_in_counting_zone(vehicle.y1, vehicle.y2):
+                    self.counted_vehicles += 1
+                    vehicle.is_counted = True
+
+    def vehicle_in_counting_zone(self, y1, y2):
+        return y1 < self.counting_line_height < y2
 
     @staticmethod
     def calculate_iou(box1, box2):
