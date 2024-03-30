@@ -1,3 +1,5 @@
+import os
+
 import cv2
 from ultralytics import YOLO
 
@@ -10,8 +12,9 @@ class Analyzer:
         self.model_confidence = confidence
         self.tracking_depth = tracking_depth  # number of previous frames to keep for vehicle tracking
 
-        # model_path = os.path.join('.', '.', 'runs', 'detect', 'train15', 'weights', 'last.pt')
-        self.model = YOLO("yolov8n.pt")
+        model_path = os.path.join('.', '.', '.', 'runs', 'detect', 'train11', 'weights', 'last.pt')
+        self.model = YOLO(model_path)
+        # self.model = YOLO("yolov8n.pt")
         self.previous_vehicles = []
         self.unassigned_id = 0
 
@@ -58,13 +61,12 @@ class Analyzer:
 
         for result in results.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = result
-
             if score > self.model_confidence:
                 vehicle_id = self.assign_vehicle_id(vehicle_box=[x1, y1, x2, y2])
-                cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), class_colors[0], 4)
+                cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), class_colors[class_id], 4)
                 cv2.putText(frame, results.names[int(class_id)].upper() + " ID: " + str(vehicle_id),
                             (int(x1), int(y1 - 10)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1.3, class_colors[0], 3, cv2.LINE_AA)
+                            cv2.FONT_HERSHEY_SIMPLEX, 1.3, class_colors[class_id], 3, cv2.LINE_AA)
         return frame
 
     def assign_vehicle_id(self, vehicle_box):
