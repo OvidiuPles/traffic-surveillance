@@ -37,23 +37,22 @@ class DataFactory:
 
         while True:
             ret, frame = cap.read()
-
             if not ret:
                 break
 
             if frame_idx % n == 0:
                 frame_file_path = os.path.join(output_path, f"{video_name}_frame_{saved_frame_idx}.jpg")
                 cv2.imwrite(frame_file_path, frame)
-                print(f"Saved {frame_file_path}")
+                print(f"saved {frame_file_path}")
                 saved_frame_idx += 1
 
             frame_idx += 1
 
         cap.release()
-        print("Done saving frames.")
+        print("frames saved in " + output_path)
 
-# DataFactory.video_to_frames(video_path=r'C:\Licenta\backup\data\raw_data\videos\video_5_night_processed.mp4',
-#                             output_path=r'C:\Licenta\backup\data\raw_data\videos\ceee',
-#                             n=1)
+DataFactory.video_to_frames(video_path=r'C:\Licenta\data\raw_data\videos\video_10_processed.mp4',
+                            output_path=r'C:\Licenta\data\raw_data\videos\ceee',
+                            n=1)
 
 # DataFactory.modify_class_labels(r"C:\Licenta\traffic-surveillance-backend\data\data_test\labels\train\motorcycle", 1, 4)
