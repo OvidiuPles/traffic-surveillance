@@ -1,6 +1,10 @@
+import concurrent.futures
 import os
+import threading
+import time
 
 import cv2
+from easyocr import easyocr
 from ultralytics import YOLO
 
 from source.processing.vehicle import Vehicle
@@ -23,6 +27,8 @@ class Analyzer:
         self.counting_line_height = 0
         self.counted_vehicles = 0
 
+        self.test_reader = easyocr.Reader(['en'], gpu=False)
+        self.test_frame = cv2.imread(r'C:\Users\Ovi Carici\OneDrive - Technical University of Cluj-Napoca\Desktop\w\x.png')
     def process_video(self, input_path, output_path=None):
         if output_path is None:
             path = input_path.split(".mp4")[0:-1]
@@ -72,6 +78,10 @@ class Analyzer:
 
     def process_frame(self, frame):
         results = self.model(frame)[0]
+        start = time.perf_counter()
+        self.process_number_plates()
+        stop = time.perf_counter()
+        print("analyzed NP in: " + str(stop - start))
 
         for result in results.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = result
@@ -112,6 +122,17 @@ class Analyzer:
             self.previous_vehicles.append(Vehicle(x1, y1, x2, y2, vehicle_id))
         return vehicle_id
 
+    def process_number_plates(self):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=7) as executor:
+            futures = [executor.submit(self.read_number_plate, i) for i in range(7)]
+            concurrent.futures.wait(futures)
+
+    def read_number_plate(self, i):
+        #frame_gray = cv2.cvtColor(self.test_frames[i], cv2.COLOR_BGR2GRAY)
+        #_, frame_thresh = cv2.threshold(frame_gray, 138, 255, cv2.THRESH_BINARY_INV)
+        result = self.test_reader.readtext(self.test_frame)
+        #return result[0][1]  # string of number plate
+
     def count_vehicles(self):
         for vehicle in self.previous_vehicles:
             if not vehicle.is_counted:
@@ -143,3 +164,6 @@ class Analyzer:
             if vehicle.frame_depth <= self.tracking_depth:
                 updated_vehicles.append(vehicle)
         self.previous_vehicles = updated_vehicles
+
+    #  TODO: convert letter to numbers and vice versa as expected by number plates format!!!!
+    #  TODO: model with gpu?
