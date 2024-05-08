@@ -1,0 +1,7 @@
+path: C:/Licenta/data/plate_recognition/data
+train: images/train
+val: images/val
+
+# plate recognition classes
+names:
+  0: number plate

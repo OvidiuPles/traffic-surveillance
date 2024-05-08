@@ -1,7 +1,4 @@
-import concurrent.futures
 import os
-import threading
-import time
 
 import cv2
 from easyocr import easyocr
@@ -9,17 +6,23 @@ from ultralytics import YOLO
 
 from source.processing.vehicle import Vehicle
 from source.utils.colors import class_colors
-from source.utils.variables import PIXELS_UPPER_CNT_LINE, STREAM_WIDTH, STREAM_HEIGHT, MAX_DIST_TRACKING_X, MAX_DIST_TRACKING_Y, MAX_ID
+from source.utils.variables import PIXELS_UPPER_CNT_LINE, STREAM_WIDTH, STREAM_HEIGHT, MAX_DIST_TRACKING_X, MAX_DIST_TRACKING_Y, MAX_ID, THIRD_LINE, \
+    dict_figure_to_letter, dict_letter_to_figure
 
 
 class Analyzer:
-    def __init__(self, confidence=0.5, tracking_depth=10):
+    def __init__(self, confidence=0.5, tracking_depth=12):
         self.model_confidence = confidence
         self.tracking_depth = tracking_depth  # number of previous frames to keep for vehicle tracking
 
-        model_path = os.path.join('.', '.', '.', 'runs', 'detect', 'train11', 'weights', 'last.pt')
-        self.model = YOLO(model_path)
+        # models
+        self.text_reader = easyocr.Reader(['en'], gpu=False)
+        vehicles_model_path = os.path.join('.', '.', '.', 'runs', 'detect', 'train11', 'weights', 'last.pt')
+        self.vehicles_model = YOLO(vehicles_model_path)
+        plates_model_path = os.path.join('.', '.', '.', 'runs', 'detect', 'train18', 'weights', 'last.pt')
+        self.number_plates_model = YOLO(plates_model_path)
         # self.model = YOLO("yolov8n.pt")
+
         self.previous_vehicles = []
         self.unassigned_id = 0
         self.image_height = 0
@@ -27,8 +30,6 @@ class Analyzer:
         self.counting_line_height = 0
         self.counted_vehicles = 0
 
-        self.test_reader = easyocr.Reader(['en'], gpu=False)
-        self.test_frame = cv2.imread(r'C:\Users\Ovi Carici\OneDrive - Technical University of Cluj-Napoca\Desktop\w\x.png')
     def process_video(self, input_path, output_path=None):
         if output_path is None:
             path = input_path.split(".mp4")[0:-1]
@@ -77,26 +78,28 @@ class Analyzer:
         cv2.destroyAllWindows()
 
     def process_frame(self, frame):
-        results = self.model(frame)[0]
-        start = time.perf_counter()
-        self.process_number_plates()
-        stop = time.perf_counter()
-        print("analyzed NP in: " + str(stop - start))
+        original_frame = frame.copy()
+        results = self.vehicles_model(frame)[0]
+
+        # counting line
+        cv2.line(frame, (0, self.counting_line_height), (int(self.image_width), self.counting_line_height), (0, 255, 0), 7)
+        cv2.putText(frame, "counted vehicles: " + str(self.counted_vehicles),
+                    (int(self.image_width - 1750), self.counting_line_height - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2.2, class_colors[4], 3, cv2.LINE_AA)
 
         for result in results.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = result
             if score > self.model_confidence:
                 vehicle_id = self.assign_vehicle_id(vehicle_box=[x1, y1, x2, y2])
+                number_plate = self.assign_number_plate(vehicle_id, original_frame)
                 cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), class_colors[class_id], 4)
                 cv2.putText(frame, results.names[int(class_id)].upper() + " ID: " + str(vehicle_id),
                             (int(x1), int(y1 - 10)),
                             cv2.FONT_HERSHEY_SIMPLEX, 1.3, class_colors[class_id], 3, cv2.LINE_AA)
-
-                # counting line
-                cv2.line(frame, (0, self.counting_line_height), (int(self.image_width), self.counting_line_height), (0, 255, 0), 7)
-                cv2.putText(frame, "counted vehicles: " + str(self.counted_vehicles),
-                            (int(self.image_width - 900), self.counting_line_height - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 2.2, class_colors[4], 3, cv2.LINE_AA)
+                if number_plate is not None:
+                    cv2.putText(frame, str(number_plate),
+                                (int(x1 + 15), int(y1 + 50)),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1.7, class_colors[2], 3, cv2.LINE_AA)
         return frame
 
     def assign_vehicle_id(self, vehicle_box):
@@ -113,7 +116,8 @@ class Analyzer:
         if max_iou > 0.3:
             vehicle_id = matching_vehicle.id
             self.previous_vehicles.remove(matching_vehicle)
-            self.previous_vehicles.append(Vehicle(x1, y1, x2, y2, vehicle_id, is_counted=matching_vehicle.is_counted))
+            self.previous_vehicles.append(
+                Vehicle(x1, y1, x2, y2, vehicle_id, is_counted=matching_vehicle.is_counted, number_plate=matching_vehicle.number_plate))
         else:
             vehicle_id = self.unassigned_id
             self.unassigned_id += 1
@@ -122,16 +126,50 @@ class Analyzer:
             self.previous_vehicles.append(Vehicle(x1, y1, x2, y2, vehicle_id))
         return vehicle_id
 
-    def process_number_plates(self):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=7) as executor:
-            futures = [executor.submit(self.read_number_plate, i) for i in range(7)]
-            concurrent.futures.wait(futures)
+    def assign_number_plate(self, vehicle_id, frame):
+        for vehicle in self.previous_vehicles:
+            if vehicle.id == vehicle_id:
+                if vehicle.number_plate is not None:
+                    return vehicle.number_plate
 
-    def read_number_plate(self, i):
-        #frame_gray = cv2.cvtColor(self.test_frames[i], cv2.COLOR_BGR2GRAY)
-        #_, frame_thresh = cv2.threshold(frame_gray, 138, 255, cv2.THRESH_BINARY_INV)
-        result = self.test_reader.readtext(self.test_frame)
-        #return result[0][1]  # string of number plate
+                if not self.is_in_reading_zone(vehicle.x1, vehicle.y1, vehicle.x2, vehicle.y2):
+                    return None
+
+                cropped_vehicle = frame[int(vehicle.y1):int(vehicle.y2), int(vehicle.x1):int(vehicle.x2)]
+                results = self.number_plates_model(cropped_vehicle)[0]
+
+                if len(results.boxes.data.tolist()) == 0:
+                    return None
+
+                x1, y1, x2, y2, score, class_id = results.boxes.data.tolist()[0]
+                x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+                cropped_plate = cropped_vehicle[y1:y2, x1:x2]
+                plate = self.preprocess_plate(cropped_plate)
+
+                result = self.text_reader.readtext(plate)
+                if self.valid_number_plate(result):
+                    string_result = result[0][1].upper()
+                    string_result = self.sanitize_number_plate(string_result)
+                    vehicle.number_plate = string_result
+                    return string_result
+                else:
+                    return None
+
+    @staticmethod
+    def valid_number_plate(plate):
+        if len(plate) > 0:
+            if plate[0][2] > 0.4 and len(plate[0][1]) > 6:
+                return True
+        return False
+
+    @staticmethod
+    def preprocess_plate(image):
+        new_width = 4 * image.shape[1]
+        new_height = 4 * image.shape[0]
+        image = cv2.resize(image, (new_width, new_height))
+        image = image[0: int(image.shape[0]), int(image.shape[1] / 12): int(image.shape[1])]
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        return image
 
     def count_vehicles(self):
         for vehicle in self.previous_vehicles:
@@ -165,5 +203,36 @@ class Analyzer:
                 updated_vehicles.append(vehicle)
         self.previous_vehicles = updated_vehicles
 
-    #  TODO: convert letter to numbers and vice versa as expected by number plates format!!!!
-    #  TODO: model with gpu?
+    def is_in_reading_zone(self, x1, y1, x2, y2):
+        return self.counting_line_height < y2 < self.image_height - 10 and x2 > THIRD_LINE
+
+    @staticmethod
+    def sanitize_number_plate(number_plate):
+        if number_plate[0].isdigit() or len(number_plate.replace(" ", "")) != 7:
+            return number_plate  # unknown format, can't sanitize
+
+        sanitized_number_plate = ""
+        initial_number_plate = number_plate
+        try:
+            number_plate = number_plate.replace(" ", "")
+            if number_plate[0] == "B" and number_plate[1] not in ["C", "H", "N", "T", "V", "R", "Z"]:  # specific format for romanian capital city
+                for i, char in enumerate(number_plate):
+                    if i in [0, 4, 5, 6] and char.isdigit():
+                        char = dict_figure_to_letter[char]
+                    elif i in [1, 2, 3] and char.isalpha():
+                        char = dict_letter_to_figure[char]
+                    sanitized_number_plate += char
+                sanitized_number_plate = sanitized_number_plate[:1] + " " + sanitized_number_plate[1:4] + " " + sanitized_number_plate[4:]
+            else:
+                for i, char in enumerate(number_plate):
+                    if i in [0, 1, 4, 5, 6] and char.isdigit():
+                        char = dict_figure_to_letter[char]
+                    elif i in [2, 3] and char.isalpha():
+                        char = dict_letter_to_figure[char]
+                    sanitized_number_plate += char
+                sanitized_number_plate = sanitized_number_plate[:2] + " " + sanitized_number_plate[2:4] + " " + sanitized_number_plate[4:]
+        except KeyError:
+            return initial_number_plate
+            # other unknown formats, ignore them
+
+        return sanitized_number_plate

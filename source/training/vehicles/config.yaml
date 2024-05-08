@@ -1,0 +1,10 @@
+path: C:/Licenta/data/plate_recognition/data
+train: images/train
+val: images/val
+
+# vehicle classes
+names:
+  0: small car
+  1: truck
+  2: bus
+  3: van
