@@ -21,7 +21,7 @@ class Analyzer:
         self.vehicles_model = YOLO(vehicles_model_path)
         plates_model_path = os.path.join('.', '.', '.', 'runs', 'detect', 'train18', 'weights', 'last.pt')
         self.number_plates_model = YOLO(plates_model_path)
-        # self.model = YOLO("yolov8n.pt")
+        # self.model = YOLO("yolov8n.pt") # to be deleted from source root after distinction with custom model is done
 
         self.previous_vehicles = []
         self.unassigned_id = 0
@@ -133,7 +133,7 @@ class Analyzer:
                 if vehicle.number_plate is not None:
                     return vehicle.number_plate
 
-                if not self.is_in_reading_zone(vehicle.x1, vehicle.y1, vehicle.x2, vehicle.y2) or vehicle.reading_attempts >= MAX_READING_ATTEMPTS:
+                if not self.is_in_reading_zone(vehicle.x2, vehicle.y2) or vehicle.reading_attempts >= MAX_READING_ATTEMPTS:
                     return None
 
                 vehicle.reading_attempts += 1
@@ -146,13 +146,9 @@ class Analyzer:
                 x1, y1, x2, y2, score, class_id = results.boxes.data.tolist()[0]
                 x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
                 cropped_plate = cropped_vehicle[y1:y2, x1:x2]
+
                 plate = self.preprocess_plate(cropped_plate)
-
                 result = self.text_reader.readtext(plate)
-
-                print(self.sanitize_number_plate(result[0][1].upper()))
-                cv2.imshow(str(result[0][2]), plate)
-                cv2.waitKey(0)
 
                 if self.valid_number_plate(result):
                     string_result = result[0][1].upper()
@@ -210,7 +206,7 @@ class Analyzer:
                 updated_vehicles.append(vehicle)
         self.previous_vehicles = updated_vehicles
 
-    def is_in_reading_zone(self, x1, y1, x2, y2):
+    def is_in_reading_zone(self, x2, y2):
         return self.counting_line_height < y2 < self.image_height - 10 and x2 > THIRD_LINE
 
     @staticmethod

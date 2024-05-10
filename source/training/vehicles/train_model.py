@@ -1,4 +1,4 @@
 from ultralytics import YOLO
 
 model = YOLO("yolov8n.yaml")
-model.train(data=r"config.yaml", epochs=100)  # , device='cpu')
+model.train(data=r"config.yaml", epochs=100)  # , device='gpu')
