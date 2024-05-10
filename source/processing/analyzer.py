@@ -7,7 +7,7 @@ from ultralytics import YOLO
 from source.processing.vehicle import Vehicle
 from source.utils.colors import class_colors
 from source.utils.variables import PIXELS_UPPER_CNT_LINE, STREAM_WIDTH, STREAM_HEIGHT, MAX_DIST_TRACKING_X, MAX_DIST_TRACKING_Y, MAX_ID, THIRD_LINE, \
-    dict_figure_to_letter, dict_letter_to_figure
+    dict_figure_to_letter, dict_letter_to_figure, MAX_READING_ATTEMPTS
 
 
 class Analyzer:
@@ -117,7 +117,8 @@ class Analyzer:
             vehicle_id = matching_vehicle.id
             self.previous_vehicles.remove(matching_vehicle)
             self.previous_vehicles.append(
-                Vehicle(x1, y1, x2, y2, vehicle_id, is_counted=matching_vehicle.is_counted, number_plate=matching_vehicle.number_plate))
+                Vehicle(x1, y1, x2, y2, vehicle_id, is_counted=matching_vehicle.is_counted, number_plate=matching_vehicle.number_plate,
+                        reading_attempts=matching_vehicle.reading_attempts))
         else:
             vehicle_id = self.unassigned_id
             self.unassigned_id += 1
@@ -132,9 +133,10 @@ class Analyzer:
                 if vehicle.number_plate is not None:
                     return vehicle.number_plate
 
-                if not self.is_in_reading_zone(vehicle.x1, vehicle.y1, vehicle.x2, vehicle.y2):
+                if not self.is_in_reading_zone(vehicle.x1, vehicle.y1, vehicle.x2, vehicle.y2) or vehicle.reading_attempts >= MAX_READING_ATTEMPTS:
                     return None
 
+                vehicle.reading_attempts += 1
                 cropped_vehicle = frame[int(vehicle.y1):int(vehicle.y2), int(vehicle.x1):int(vehicle.x2)]
                 results = self.number_plates_model(cropped_vehicle)[0]
 
@@ -147,6 +149,11 @@ class Analyzer:
                 plate = self.preprocess_plate(cropped_plate)
 
                 result = self.text_reader.readtext(plate)
+
+                print(self.sanitize_number_plate(result[0][1].upper()))
+                cv2.imshow(str(result[0][2]), plate)
+                cv2.waitKey(0)
+
                 if self.valid_number_plate(result):
                     string_result = result[0][1].upper()
                     string_result = self.sanitize_number_plate(string_result)
@@ -167,7 +174,7 @@ class Analyzer:
         new_width = 4 * image.shape[1]
         new_height = 4 * image.shape[0]
         image = cv2.resize(image, (new_width, new_height))
-        image = image[0: int(image.shape[0]), int(image.shape[1] / 12): int(image.shape[1])]
+        image = image[0: int(image.shape[0]), int(image.shape[1] / 10): int(image.shape[1])]
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         return image
 

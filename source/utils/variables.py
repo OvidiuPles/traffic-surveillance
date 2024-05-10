@@ -9,6 +9,7 @@ MAX_DIST_TRACKING_X = 300
 MAX_DIST_TRACKING_Y = 600
 
 MAX_ID = 100
+MAX_READING_ATTEMPTS = 3
 
 dict_letter_to_figure = {
     'O': '0',
