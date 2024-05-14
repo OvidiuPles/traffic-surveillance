@@ -91,6 +91,9 @@ class Analyzer:
                     (int(self.image_width - 2000), self.counting_line_height + 60),
                     cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
 
+        # lanes lines
+        frame = self.draw_lines(frame)
+
         for result in results.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = result
             if score > self.model_confidence:
@@ -243,3 +246,30 @@ class Analyzer:
             # other unknown formats, ignore them
 
         return sanitized_number_plate
+
+    @staticmethod
+    def draw_lines(frame):
+        cv2.line(frame, (800, 0), (0, int(2160 / 4)), (0, 255, 0), 7)
+        cv2.line(frame, (1100, 0), (0, int(2160 / 2 + 70)), (0, 255, 0), 7)
+        cv2.line(frame, (1370, 0), (75, 2160), (0, 255, 0), 7)
+        cv2.line(frame, (1660, 0), (1160, 2160), (0, 255, 0), 7)
+        cv2.line(frame, (2030, 0), (2290, 2160), (0, 255, 0), 7)
+        cv2.line(frame, (2500, 0), (3950, 2160), (0, 255, 0), 7)  # first (right to left)
+
+        cv2.putText(frame, f"plm",
+                    (5, int(2100/3)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
+        cv2.putText(frame, f"plm",
+                    (5, int(2100/1.3)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
+        cv2.putText(frame, f"plm",
+                    (600, 2100),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
+        cv2.putText(frame, f"plm",
+                    (1750, 2100),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
+        cv2.putText(frame, f"plm",
+                    (2800, 2100),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
+
+        return frame

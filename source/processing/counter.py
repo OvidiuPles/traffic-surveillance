@@ -8,6 +8,11 @@ class Counter:
         self.trucks = 0
         self.busses = 0
         self.vans = 0
+        self.first_lane = 0  # right to left
+        self.second_lane = 0
+        self.third_lane = 0
+        self.fourth_lane = 0
+        self.fifth_lane = 0
 
     def count(self, vehicle: Vehicle):
         self.vehicles += 1
@@ -20,3 +25,12 @@ class Counter:
                 self.busses += 1
             case 3:
                 self.vans += 1
+
+    @staticmethod
+    def point_on_line(y):
+        x1, y1 = 2500, 0
+        x2, y2 = 3950, 2160
+
+        m = (y2 - y1) / (x2 - x1)
+        x = (y - y1) / m + x1
+        return int(x), int(y)
