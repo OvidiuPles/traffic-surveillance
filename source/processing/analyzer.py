@@ -7,8 +7,7 @@ from ultralytics import YOLO
 from source.processing.counter import Counter
 from source.processing.vehicle import Vehicle
 from source.utils.colors import class_colors
-from source.utils.variables import PIXELS_UPPER_CNT_LINE, STREAM_WIDTH, STREAM_HEIGHT, MAX_DIST_TRACKING_X, MAX_DIST_TRACKING_Y, MAX_ID, THIRD_LINE, \
-    dict_figure_to_letter, dict_letter_to_figure, MAX_READING_ATTEMPTS
+from source.utils.variables import *
 
 
 class Analyzer:
@@ -247,29 +246,28 @@ class Analyzer:
 
         return sanitized_number_plate
 
-    @staticmethod
-    def draw_lines(frame):
-        cv2.line(frame, (800, 0), (0, int(2160 / 4)), (0, 255, 0), 7)
-        cv2.line(frame, (1100, 0), (0, int(2160 / 2 + 70)), (0, 255, 0), 7)
-        cv2.line(frame, (1370, 0), (75, 2160), (0, 255, 0), 7)
-        cv2.line(frame, (1660, 0), (1160, 2160), (0, 255, 0), 7)
-        cv2.line(frame, (2030, 0), (2290, 2160), (0, 255, 0), 7)
-        cv2.line(frame, (2500, 0), (3950, 2160), (0, 255, 0), 7)  # first (right to left)
+    def draw_lines(self, frame):
+        cv2.line(frame, LINE1_PT1, LINE1_PT2, (0, 255, 0), 7)  # first (right to left)
+        cv2.line(frame, LINE2_PT1, LINE2_PT2, (0, 255, 0), 7)
+        cv2.line(frame, LINE3_PT1, LINE3_PT2, (0, 255, 0), 7)
+        cv2.line(frame, LINE4_PT1, LINE4_PT2, (0, 255, 0), 7)
+        cv2.line(frame, LINE5_PT1, LINE5_PT2, (0, 255, 0), 7)
+        cv2.line(frame, LINE6_PT1, LINE6_PT2, (0, 255, 0), 7)
 
-        cv2.putText(frame, f"plm",
-                    (5, int(2100/3)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
-        cv2.putText(frame, f"plm",
-                    (5, int(2100/1.3)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
-        cv2.putText(frame, f"plm",
+        cv2.putText(frame, str(self.counter.fifth_lane),
+                    (5, int(2100 / 3)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 3, class_colors[4], 2, cv2.LINE_AA)
+        cv2.putText(frame, str(self.counter.fourth_lane),
+                    (5, int(2100 / 1.3)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 3, class_colors[4], 2, cv2.LINE_AA)
+        cv2.putText(frame, str(self.counter.third_lane),
                     (600, 2100),
-                    cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
-        cv2.putText(frame, f"plm",
+                    cv2.FONT_HERSHEY_SIMPLEX, 3, class_colors[4], 2, cv2.LINE_AA)
+        cv2.putText(frame, str(self.counter.second_lane),
                     (1750, 2100),
-                    cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
-        cv2.putText(frame, f"plm",
+                    cv2.FONT_HERSHEY_SIMPLEX, 3, class_colors[4], 2, cv2.LINE_AA)
+        cv2.putText(frame, str(self.counter.first_lane),
                     (2800, 2100),
-                    cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 3, class_colors[4], 2, cv2.LINE_AA)
 
         return frame
