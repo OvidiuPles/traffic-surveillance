@@ -1,5 +1,5 @@
 PIXELS_UPPER_CNT_LINE = 250  # number of pixels upper than mid of image, used for vehicle counting line
-THIRD_LINE = 1000  # third line on the road from right to left, only used for counting
+THIRD_LINE = 1000  # third line on the road from right to left, only used for reading zone
 
 STREAM_WIDTH = 1200
 STREAM_HEIGHT = 700
