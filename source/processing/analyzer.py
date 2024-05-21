@@ -1,6 +1,8 @@
 import os
 
 import cv2
+from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtWidgets import QLabel
 from easyocr import easyocr
 from ultralytics import YOLO
 
@@ -11,7 +13,7 @@ from source.utils.variables import *
 
 
 class Analyzer:
-    def __init__(self, confidence=0.5, tracking_depth=12):
+    def __init__(self, confidence=0.5, tracking_depth=12, stream_output=None):
         self.model_confidence = confidence
         self.tracking_depth = tracking_depth  # number of previous frames to keep for vehicle tracking
 
@@ -23,6 +25,7 @@ class Analyzer:
         self.number_plates_model = YOLO(plates_model_path)
         # self.model = YOLO("yolov8n.pt") # to be deleted from source root after distinction with custom model is done
 
+        self.stream_output = stream_output
         self.counter = Counter()
         self.previous_vehicles = []
         self.unassigned_id = 0
@@ -69,8 +72,12 @@ class Analyzer:
             frame = self.process_frame(frame)
             self.update_previous_vehicles()
 
-            frame = cv2.resize(frame, (STREAM_WIDTH, STREAM_HEIGHT))
-            cv2.imshow('Stream', frame)
+            if self.stream_output is None:
+                frame = cv2.resize(frame, (STREAM_WIDTH, STREAM_HEIGHT))
+                cv2.imshow('Stream', frame)
+            else:
+                frame = self.convert_cv2_to_qpixmap(frame)
+                self.stream_output.setPixmap(frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
@@ -277,3 +284,14 @@ class Analyzer:
         if (y2 > self.counting_line_height and width < 340) or (y2 < self.counting_line_height and width < 200):
             return False
         return True
+
+    @staticmethod
+    def convert_cv2_to_qpixmap(cv_img):
+        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+        height, width, channel = rgb_image.shape
+        bytes_per_line = 3 * width
+        q_image = QImage(rgb_image.data, width, height, bytes_per_line, QImage.Format_RGB888)
+        q_pixmap = QPixmap.fromImage(q_image)
+
+        return q_pixmap
+
