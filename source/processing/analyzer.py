@@ -84,18 +84,18 @@ class Analyzer:
         # counting line
         cv2.line(frame, (0, self.counting_line_height), (int(self.image_width), self.counting_line_height), (0, 255, 0), 7)
         cv2.putText(frame, "counted vehicles: " + str(self.counter.vehicles),
-                    (int(self.image_width - 1750), self.counting_line_height - 10),
+                    (int(self.image_width - 1800), self.counting_line_height - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 2.2, class_colors[4], 3, cv2.LINE_AA)
         cv2.putText(frame, f"cars: {self.counter.cars}, trucks:{self.counter.trucks}, busses:{self.counter.busses}, vans:{self.counter.vans}",
                     (int(self.image_width - 2000), self.counting_line_height + 60),
                     cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
 
         # lanes lines
-        frame = self.draw_lines(frame)
+        frame = self.draw_lane_lines(frame)
 
         for result in results.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = result
-            if score > self.model_confidence:
+            if score > self.model_confidence and self.valid_width(x1, x2, y2):
                 vehicle_id = self.assign_vehicle_id(vehicle_box=[x1, y1, x2, y2], class_id=class_id)
                 number_plate = self.assign_number_plate(vehicle_id, original_frame)
                 cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), class_colors[class_id], 4)
@@ -246,7 +246,7 @@ class Analyzer:
 
         return sanitized_number_plate
 
-    def draw_lines(self, frame):
+    def draw_lane_lines(self, frame):
         cv2.line(frame, LINE1_PT1, LINE1_PT2, (0, 255, 0), 7)  # first (right to left)
         cv2.line(frame, LINE2_PT1, LINE2_PT2, (0, 255, 0), 7)
         cv2.line(frame, LINE3_PT1, LINE3_PT2, (0, 255, 0), 7)
@@ -256,18 +256,24 @@ class Analyzer:
 
         cv2.putText(frame, str(self.counter.fifth_lane),
                     (5, int(2100 / 3)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 3, class_colors[4], 2, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
         cv2.putText(frame, str(self.counter.fourth_lane),
                     (5, int(2100 / 1.3)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 3, class_colors[4], 2, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
         cv2.putText(frame, str(self.counter.third_lane),
                     (600, 2100),
-                    cv2.FONT_HERSHEY_SIMPLEX, 3, class_colors[4], 2, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
         cv2.putText(frame, str(self.counter.second_lane),
                     (1750, 2100),
-                    cv2.FONT_HERSHEY_SIMPLEX, 3, class_colors[4], 2, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
         cv2.putText(frame, str(self.counter.first_lane),
                     (2800, 2100),
-                    cv2.FONT_HERSHEY_SIMPLEX, 3, class_colors[4], 2, cv2.LINE_AA)
+                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
 
         return frame
+
+    def valid_width(self, x1, x2, y2):
+        width = x2 - x1
+        if (y2 > self.counting_line_height and width < 340) or (y2 < self.counting_line_height and width < 200):
+            return False
+        return True
