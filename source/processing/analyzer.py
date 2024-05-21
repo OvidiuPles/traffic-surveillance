@@ -4,10 +4,10 @@ import cv2
 from easyocr import easyocr
 from ultralytics import YOLO
 
+from source.processing.counter import Counter
 from source.processing.vehicle import Vehicle
 from source.utils.colors import class_colors
-from source.utils.variables import PIXELS_UPPER_CNT_LINE, STREAM_WIDTH, STREAM_HEIGHT, MAX_DIST_TRACKING_X, MAX_DIST_TRACKING_Y, MAX_ID, THIRD_LINE, \
-    dict_figure_to_letter, dict_letter_to_figure, MAX_READING_ATTEMPTS
+from source.utils.variables import *
 
 
 class Analyzer:
@@ -23,12 +23,12 @@ class Analyzer:
         self.number_plates_model = YOLO(plates_model_path)
         # self.model = YOLO("yolov8n.pt") # to be deleted from source root after distinction with custom model is done
 
+        self.counter = Counter()
         self.previous_vehicles = []
         self.unassigned_id = 0
         self.image_height = 0
         self.image_width = 0
         self.counting_line_height = 0
-        self.counted_vehicles = 0
 
     def process_video(self, input_path, output_path=None):
         if output_path is None:
@@ -83,14 +83,20 @@ class Analyzer:
 
         # counting line
         cv2.line(frame, (0, self.counting_line_height), (int(self.image_width), self.counting_line_height), (0, 255, 0), 7)
-        cv2.putText(frame, "counted vehicles: " + str(self.counted_vehicles),
-                    (int(self.image_width - 1750), self.counting_line_height - 10),
+        cv2.putText(frame, "counted vehicles: " + str(self.counter.vehicles),
+                    (int(self.image_width - 1800), self.counting_line_height - 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 2.2, class_colors[4], 3, cv2.LINE_AA)
+        cv2.putText(frame, f"cars: {self.counter.cars}, trucks:{self.counter.trucks}, busses:{self.counter.busses}, vans:{self.counter.vans}",
+                    (int(self.image_width - 2000), self.counting_line_height + 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
+
+        # lanes lines
+        frame = self.draw_lane_lines(frame)
 
         for result in results.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = result
-            if score > self.model_confidence:
-                vehicle_id = self.assign_vehicle_id(vehicle_box=[x1, y1, x2, y2])
+            if score > self.model_confidence and self.valid_width(x1, x2, y2):
+                vehicle_id = self.assign_vehicle_id(vehicle_box=[x1, y1, x2, y2], class_id=class_id)
                 number_plate = self.assign_number_plate(vehicle_id, original_frame)
                 cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), class_colors[class_id], 4)
                 cv2.putText(frame, results.names[int(class_id)].upper() + " ID: " + str(vehicle_id),
@@ -102,7 +108,7 @@ class Analyzer:
                                 cv2.FONT_HERSHEY_SIMPLEX, 1.7, class_colors[2], 3, cv2.LINE_AA)
         return frame
 
-    def assign_vehicle_id(self, vehicle_box):
+    def assign_vehicle_id(self, vehicle_box, class_id):
         x1, y1, x2, y2 = vehicle_box
         max_iou = 0
         matching_vehicle = None
@@ -118,13 +124,13 @@ class Analyzer:
             self.previous_vehicles.remove(matching_vehicle)
             self.previous_vehicles.append(
                 Vehicle(x1, y1, x2, y2, vehicle_id, is_counted=matching_vehicle.is_counted, number_plate=matching_vehicle.number_plate,
-                        reading_attempts=matching_vehicle.reading_attempts))
+                        reading_attempts=matching_vehicle.reading_attempts, class_id=class_id))
         else:
             vehicle_id = self.unassigned_id
             self.unassigned_id += 1
             if self.unassigned_id >= MAX_ID:
                 self.unassigned_id = 0
-            self.previous_vehicles.append(Vehicle(x1, y1, x2, y2, vehicle_id))
+            self.previous_vehicles.append(Vehicle(x1, y1, x2, y2, vehicle_id, class_id=class_id))
         return vehicle_id
 
     def assign_number_plate(self, vehicle_id, frame):
@@ -178,7 +184,7 @@ class Analyzer:
         for vehicle in self.previous_vehicles:
             if not vehicle.is_counted:
                 if self.vehicle_in_counting_zone(vehicle.y1, vehicle.y2):
-                    self.counted_vehicles += 1
+                    self.counter.count(vehicle)
                     vehicle.is_counted = True
 
     def vehicle_in_counting_zone(self, y1, y2):
@@ -239,3 +245,35 @@ class Analyzer:
             # other unknown formats, ignore them
 
         return sanitized_number_plate
+
+    def draw_lane_lines(self, frame):
+        cv2.line(frame, LINE1_PT1, LINE1_PT2, (0, 255, 0), 7)  # first (right to left)
+        cv2.line(frame, LINE2_PT1, LINE2_PT2, (0, 255, 0), 7)
+        cv2.line(frame, LINE3_PT1, LINE3_PT2, (0, 255, 0), 7)
+        cv2.line(frame, LINE4_PT1, LINE4_PT2, (0, 255, 0), 7)
+        cv2.line(frame, LINE5_PT1, LINE5_PT2, (0, 255, 0), 7)
+        cv2.line(frame, LINE6_PT1, LINE6_PT2, (0, 255, 0), 7)
+
+        cv2.putText(frame, str(self.counter.fifth_lane),
+                    (5, int(2100 / 3)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
+        cv2.putText(frame, str(self.counter.fourth_lane),
+                    (5, int(2100 / 1.3)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
+        cv2.putText(frame, str(self.counter.third_lane),
+                    (600, 2100),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
+        cv2.putText(frame, str(self.counter.second_lane),
+                    (1750, 2100),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
+        cv2.putText(frame, str(self.counter.first_lane),
+                    (2800, 2100),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
+
+        return frame
+
+    def valid_width(self, x1, x2, y2):
+        width = x2 - x1
+        if (y2 > self.counting_line_height and width < 340) or (y2 < self.counting_line_height and width < 200):
+            return False
+        return True

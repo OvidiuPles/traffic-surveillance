@@ -1,5 +1,5 @@
 PIXELS_UPPER_CNT_LINE = 250  # number of pixels upper than mid of image, used for vehicle counting line
-THIRD_LINE = 1000  # third line on the road from right to left
+THIRD_LINE = 1000  # third line on the road from right to left, only used for reading zone
 
 STREAM_WIDTH = 1200
 STREAM_HEIGHT = 700
@@ -36,3 +36,24 @@ dict_figure_to_letter = {
     '7': 'T',
     '8': 'B',
 }
+
+DEFAULT_FRAME_HEIGHT = 2160
+
+LINE1_PT1 = (2500, 0)
+LINE1_PT2 = (3950, DEFAULT_FRAME_HEIGHT)
+
+LINE2_PT1 = (2030, 0)
+LINE2_PT2 = (2290, DEFAULT_FRAME_HEIGHT)
+
+LINE3_PT1 = (1660, 0)
+LINE3_PT2 = (1160, DEFAULT_FRAME_HEIGHT)
+
+LINE4_PT1 = (1370, 0)
+LINE4_PT2 = (75, DEFAULT_FRAME_HEIGHT)
+
+LINE5_PT1 = (1100, 0)
+LINE5_PT2 = (0, int(DEFAULT_FRAME_HEIGHT / 2 + 70))
+
+LINE6_PT1 = (800, 0)
+LINE6_PT2 = (0, int(DEFAULT_FRAME_HEIGHT / 4))
+
