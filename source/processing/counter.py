@@ -68,3 +68,15 @@ class Counter:
         m = (y2 - y1) / (x2 - x1)
         x = (y - y1) / m + x1
         return int(x), int(y)
+
+    def reset(self):
+        self.vehicles = 0
+        self.cars = 0
+        self.trucks = 0
+        self.busses = 0
+        self.vans = 0
+        self.first_lane = 0
+        self.second_lane = 0
+        self.third_lane = 0
+        self.fourth_lane = 0
+        self.fifth_lane = 0

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1148</width>
-    <height>738</height>
+    <width>1152</width>
+    <height>746</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -244,7 +244,7 @@
        <property name="title">
         <string>Streaming</string>
        </property>
-       <widget class="QLineEdit" name="lineEdit">
+       <widget class="QLineEdit" name="stream_input_lineEdit">
         <property name="geometry">
          <rect>
           <x>20</x>
@@ -254,7 +254,7 @@
          </rect>
         </property>
         <property name="text">
-         <string/>
+         <string>C:\Licenta\data\raw_data\videos\video_5.mp4</string>
         </property>
         <property name="placeholderText">
          <string>Stream input</string>
@@ -271,14 +271,14 @@
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
-          <widget class="QPushButton" name="pushButton">
+          <widget class="QPushButton" name="start_stream_pushButton">
            <property name="text">
             <string>Start stream</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_4">
+          <widget class="QPushButton" name="stop_stream_pushButton">
            <property name="text">
             <string>Stop stream</string>
            </property>
@@ -384,7 +384,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1148</width>
+     <width>1152</width>
      <height>22</height>
     </rect>
    </property>

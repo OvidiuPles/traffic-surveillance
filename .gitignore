@@ -2,3 +2,5 @@
 .venv/
 source/processing/__pycache__/
 source/utils/__pycache__/
+source/gui/__pycache__/
+source/gui/generated/__pycache__/

@@ -32,8 +32,11 @@ class Analyzer:
         self.image_height = 0
         self.image_width = 0
         self.counting_line_height = 0
+        self.stop_stream = False
 
     def process_video(self, input_path, output_path=None):
+        self.counter.reset()
+        self.previous_vehicles = []
         if output_path is None:
             path = input_path.split(".mp4")[0:-1]
             output_path = "\\".join(path) + "_processed.mp4"  # same dir as input
@@ -57,6 +60,9 @@ class Analyzer:
         cv2.destroyAllWindows()
 
     def process_stream(self, input_path):
+        self.counter.reset()
+        self.previous_vehicles = []
+        self.stop_stream = False
         cap = cv2.VideoCapture(input_path)
         got_image_size = False
         while True:
@@ -78,7 +84,7 @@ class Analyzer:
             else:
                 frame = self.convert_cv2_to_qpixmap(frame)
                 self.stream_output.setPixmap(frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if cv2.waitKey(1) & 0xFF == ord('q') or self.stop_stream is True:
                 break
 
         cap.release()
