@@ -34,6 +34,17 @@ class Analyzer:
         self.counting_line_height = 0
         self.stop_stream = False
 
+        #  processing options
+        self.show_boxes = True
+        self.show_classes = True
+        self.show_number_plates = True
+        self.show_total_counting = True
+        self.show_class_counting = True
+        self.show_lane_counting = True
+        self.show_lanes = True
+        self.show_ids = True
+        self.show_counting_line = True
+
     def process_video(self, input_path, output_path=None):
         self.counter.reset()
         self.previous_vehicles = []
@@ -94,31 +105,40 @@ class Analyzer:
         original_frame = frame.copy()
         results = self.vehicles_model(frame)[0]
 
-        # counting line
-        cv2.line(frame, (0, self.counting_line_height), (int(self.image_width), self.counting_line_height), (0, 255, 0), 7)
-        cv2.putText(frame, "counted vehicles: " + str(self.counter.vehicles),
-                    (int(self.image_width - 1800), self.counting_line_height - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 2.2, class_colors[4], 3, cv2.LINE_AA)
-        cv2.putText(frame, f"cars: {self.counter.cars}, trucks:{self.counter.trucks}, busses:{self.counter.busses}, vans:{self.counter.vans}",
-                    (int(self.image_width - 2000), self.counting_line_height + 60),
-                    cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
+        if self.show_counting_line:
+            cv2.line(frame, (0, self.counting_line_height), (int(self.image_width), self.counting_line_height), (0, 255, 0), 7)
 
-        # lanes lines
+        if self.show_total_counting:
+            cv2.putText(frame, "counted vehicles: " + str(self.counter.vehicles),
+                        (int(self.image_width - 1800), self.counting_line_height - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 2.2, class_colors[4], 3, cv2.LINE_AA)
+
+        if self.show_class_counting:
+            cv2.putText(frame, f"cars: {self.counter.cars}, trucks:{self.counter.trucks}, busses:{self.counter.busses}, vans:{self.counter.vans}",
+                        (int(self.image_width - 2000), self.counting_line_height + 60),
+                        cv2.FONT_HERSHEY_SIMPLEX, 2, class_colors[4], 2, cv2.LINE_AA)
+
         frame = self.draw_lane_lines(frame)
 
         for result in results.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = result
             if score > self.model_confidence and self.valid_width(x1, x2, y2):
                 vehicle_id = self.assign_vehicle_id(vehicle_box=[x1, y1, x2, y2], class_id=class_id)
-                number_plate = self.assign_number_plate(vehicle_id, original_frame)
-                cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), class_colors[class_id], 4)
-                cv2.putText(frame, results.names[int(class_id)].upper() + " ID: " + str(vehicle_id),
+
+                if self.show_number_plates:
+                    number_plate = self.assign_number_plate(vehicle_id, original_frame)
+                    if number_plate is not None:
+                        cv2.putText(frame, str(number_plate),
+                                    (int(x1 + 15), int(y1 + 50)),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 1.7, class_colors[2], 3, cv2.LINE_AA)
+
+                if self.show_boxes:
+                    cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), class_colors[class_id], 4)
+                class_name = results.names[int(class_id)].upper() if self.show_classes else ""
+                displayed_id = " ID: " + str(vehicle_id) if self.show_ids else ""
+                cv2.putText(frame, class_name + displayed_id,
                             (int(x1), int(y1 - 10)),
                             cv2.FONT_HERSHEY_SIMPLEX, 1.3, class_colors[class_id], 3, cv2.LINE_AA)
-                if number_plate is not None:
-                    cv2.putText(frame, str(number_plate),
-                                (int(x1 + 15), int(y1 + 50)),
-                                cv2.FONT_HERSHEY_SIMPLEX, 1.7, class_colors[2], 3, cv2.LINE_AA)
         return frame
 
     def assign_vehicle_id(self, vehicle_box, class_id):
@@ -260,28 +280,30 @@ class Analyzer:
         return sanitized_number_plate
 
     def draw_lane_lines(self, frame):
-        cv2.line(frame, LINE1_PT1, LINE1_PT2, (0, 255, 0), 7)  # first (right to left)
-        cv2.line(frame, LINE2_PT1, LINE2_PT2, (0, 255, 0), 7)
-        cv2.line(frame, LINE3_PT1, LINE3_PT2, (0, 255, 0), 7)
-        cv2.line(frame, LINE4_PT1, LINE4_PT2, (0, 255, 0), 7)
-        cv2.line(frame, LINE5_PT1, LINE5_PT2, (0, 255, 0), 7)
-        cv2.line(frame, LINE6_PT1, LINE6_PT2, (0, 255, 0), 7)
+        if self.show_lanes:
+            cv2.line(frame, LINE1_PT1, LINE1_PT2, (0, 255, 0), 7)  # first (right to left)
+            cv2.line(frame, LINE2_PT1, LINE2_PT2, (0, 255, 0), 7)
+            cv2.line(frame, LINE3_PT1, LINE3_PT2, (0, 255, 0), 7)
+            cv2.line(frame, LINE4_PT1, LINE4_PT2, (0, 255, 0), 7)
+            cv2.line(frame, LINE5_PT1, LINE5_PT2, (0, 255, 0), 7)
+            cv2.line(frame, LINE6_PT1, LINE6_PT2, (0, 255, 0), 7)
 
-        cv2.putText(frame, str(self.counter.fifth_lane),
-                    (5, int(2100 / 3)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
-        cv2.putText(frame, str(self.counter.fourth_lane),
-                    (5, int(2100 / 1.3)),
-                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
-        cv2.putText(frame, str(self.counter.third_lane),
-                    (600, 2100),
-                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
-        cv2.putText(frame, str(self.counter.second_lane),
-                    (1750, 2100),
-                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
-        cv2.putText(frame, str(self.counter.first_lane),
-                    (2800, 2100),
-                    cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
+        if self.show_lane_counting:
+            cv2.putText(frame, str(self.counter.fifth_lane),
+                        (5, int(2100 / 3)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
+            cv2.putText(frame, str(self.counter.fourth_lane),
+                        (5, int(2100 / 1.3)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
+            cv2.putText(frame, str(self.counter.third_lane),
+                        (600, 2100),
+                        cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
+            cv2.putText(frame, str(self.counter.second_lane),
+                        (1750, 2100),
+                        cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
+            cv2.putText(frame, str(self.counter.first_lane),
+                        (2800, 2100),
+                        cv2.FONT_HERSHEY_SIMPLEX, 2.5, class_colors[4], 3, cv2.LINE_AA)
 
         return frame
 
