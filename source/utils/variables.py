@@ -9,7 +9,6 @@ MAX_DIST_TRACKING_X = 300
 MAX_DIST_TRACKING_Y = 600
 
 MAX_ID = 100
-MAX_READING_ATTEMPTS = 2
 
 dict_letter_to_figure = {
     'O': '0',
@@ -56,4 +55,3 @@ LINE5_PT2 = (0, int(DEFAULT_FRAME_HEIGHT / 2 + 70))
 
 LINE6_PT1 = (800, 0)
 LINE6_PT2 = (0, int(DEFAULT_FRAME_HEIGHT / 4))
-

@@ -2,7 +2,6 @@ import os
 
 import cv2
 from PySide6.QtGui import QImage, QPixmap
-from PySide6.QtWidgets import QLabel
 from easyocr import easyocr
 from ultralytics import YOLO
 
@@ -14,8 +13,11 @@ from source.utils.variables import *
 
 class Analyzer:
     def __init__(self, confidence=0.5, tracking_depth=12, stream_output=None):
+        # processing parameters
         self.model_confidence = confidence
         self.tracking_depth = tracking_depth  # number of previous frames to keep for vehicle tracking
+        self.plates_confidence = 0.4
+        self.reading_attempts = 2
 
         # models
         self.text_reader = easyocr.Reader(['en'], gpu=False)
@@ -122,7 +124,7 @@ class Analyzer:
 
         for result in results.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = result
-            if score > self.model_confidence and self.valid_width(x1, x2, y2):
+            if score >= self.model_confidence and self.valid_width(x1, x2, y2):
                 vehicle_id = self.assign_vehicle_id(vehicle_box=[x1, y1, x2, y2], class_id=class_id)
 
                 if self.show_number_plates:
@@ -172,7 +174,7 @@ class Analyzer:
                 if vehicle.number_plate is not None:
                     return vehicle.number_plate
 
-                if not self.is_in_reading_zone(vehicle.x2, vehicle.y2) or vehicle.reading_attempts >= MAX_READING_ATTEMPTS:
+                if not self.is_in_reading_zone(vehicle.x2, vehicle.y2) or vehicle.reading_attempts >= self.reading_attempts:
                     return None
 
                 vehicle.reading_attempts += 1
@@ -197,10 +199,9 @@ class Analyzer:
                 else:
                     return None
 
-    @staticmethod
-    def valid_number_plate(plate):
+    def valid_number_plate(self, plate):
         if len(plate) > 0:
-            if plate[0][2] > 0.4 and len(plate[0][1]) > 6:
+            if plate[0][2] > self.plates_confidence and len(plate[0][1]) > 6:
                 return True
         return False
 
@@ -322,4 +323,3 @@ class Analyzer:
         q_pixmap = QPixmap.fromImage(q_image)
 
         return q_pixmap
-

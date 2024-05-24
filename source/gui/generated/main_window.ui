@@ -182,7 +182,7 @@
          <item>
           <layout class="QVBoxLayout" name="verticalLayout_5">
            <item>
-            <widget class="QDoubleSpinBox" name="doubleSpinBox_2">
+            <widget class="QDoubleSpinBox" name="vehicles_confidence_spinBox">
              <property name="decimals">
               <number>1</number>
              </property>
@@ -192,17 +192,20 @@
              <property name="singleStep">
               <double>0.100000000000000</double>
              </property>
+             <property name="value">
+              <double>0.000000000000000</double>
+             </property>
             </widget>
            </item>
            <item>
-            <widget class="QSpinBox" name="spinBox">
+            <widget class="QSpinBox" name="tracking_depth_spinBox">
              <property name="maximum">
               <number>40</number>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QDoubleSpinBox" name="doubleSpinBox_5">
+            <widget class="QDoubleSpinBox" name="plates_confidence_spinBox">
              <property name="decimals">
               <number>1</number>
              </property>
@@ -215,7 +218,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QSpinBox" name="spinBox_2">
+            <widget class="QSpinBox" name="reading_attempts_spinBox">
              <property name="maximum">
               <number>40</number>
              </property>
@@ -229,7 +232,7 @@
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>850</x>
@@ -260,7 +263,7 @@
          <string>Stream input</string>
         </property>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>20</x>
@@ -306,7 +309,7 @@
          <string>Process video</string>
         </property>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>20</x>

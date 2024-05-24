@@ -1,9 +1,5 @@
-import sys
-import time
-
-import cv2
-from PySide6.QtGui import QPixmap, QImage
-from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QMessageBox
+from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QLabel, QMainWindow
 
 from source.gui.generated.main_window import Ui_MainWindow
 from source.processing.analyzer import Analyzer
@@ -55,8 +51,35 @@ class MainGUI(QMainWindow):
         self.gui.counting_line_checkBox.setChecked(self.analyzer.show_counting_line)
         self.gui.counting_line_checkBox.stateChanged.connect(self.toggle_counting_line)
 
+        # processing parameters
+        self.gui.vehicles_confidence_spinBox.setValue(self.analyzer.model_confidence)
+        self.gui.tracking_depth_spinBox.setValue(self.analyzer.tracking_depth)
+        self.gui.plates_confidence_spinBox.setValue(self.analyzer.plates_confidence)
+        self.gui.reading_attempts_spinBox.setValue(self.analyzer.reading_attempts)
+
+        self.gui.vehicles_confidence_spinBox.valueChanged.connect(self.change_vehicle_confidence)
+        self.gui.tracking_depth_spinBox.valueChanged.connect(self.change_tracking_depth)
+        self.gui.plates_confidence_spinBox.valueChanged.connect(self.change_plates_confidence)
+        self.gui.reading_attempts_spinBox.valueChanged.connect(self.change_reading_attempts)
+
+    def change_vehicle_confidence(self):
+        self.analyzer.model_confidence = self.gui.vehicles_confidence_spinBox.value()
+
+    def change_tracking_depth(self):
+        self.analyzer.tracking_depth = self.gui.tracking_depth_spinBox.value()
+
+    def change_plates_confidence(self):
+        self.analyzer.plates_confidence = self.gui.plates_confidence_spinBox.value()
+
+    def change_reading_attempts(self):
+        self.analyzer.reading_attempts = self.gui.reading_attempts_spinBox.value()
+
     def start_stream(self):
-        self.analyzer.process_stream(fr"{self.gui.stream_input_lineEdit.text()}")
+        if self.gui.stream_input_lineEdit.text() == "0":
+            stream_input = 0
+        else:
+            stream_input = fr"{self.gui.stream_input_lineEdit.text()}"
+        self.analyzer.process_stream(stream_input)
         self.stop_stream()
 
     def stop_stream(self):
@@ -122,6 +145,6 @@ class MainGUI(QMainWindow):
         # response = QMessageBox.question(self, 'Quit', "Are you sure you want to quit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         # if response == QMessageBox.Yes:
         #     event.accept()
-              self.analyzer.stop_stream = True
-        # else:
-        #     event.ignore()
+        self.analyzer.stop_stream = True
+    # else:
+    #     event.ignore()
