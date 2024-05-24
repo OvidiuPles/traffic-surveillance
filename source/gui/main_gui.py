@@ -1,5 +1,7 @@
+import threading
+
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QLabel, QMainWindow
+from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox
 
 from source.gui.generated.main_window import Ui_MainWindow
 from source.processing.analyzer import Analyzer
@@ -16,6 +18,8 @@ class MainGUI(QMainWindow):
 
         self.gui.start_stream_pushButton.clicked.connect(self.start_stream)
         self.gui.stop_stream_pushButton.clicked.connect(self.stop_stream)
+
+        self.gui.process_video_pushButton.clicked.connect(self.process_video)
 
         self.stream_output = QLabel()
         self.stream_output.setScaledContents(True)
@@ -62,18 +66,6 @@ class MainGUI(QMainWindow):
         self.gui.plates_confidence_spinBox.valueChanged.connect(self.change_plates_confidence)
         self.gui.reading_attempts_spinBox.valueChanged.connect(self.change_reading_attempts)
 
-    def change_vehicle_confidence(self):
-        self.analyzer.model_confidence = self.gui.vehicles_confidence_spinBox.value()
-
-    def change_tracking_depth(self):
-        self.analyzer.tracking_depth = self.gui.tracking_depth_spinBox.value()
-
-    def change_plates_confidence(self):
-        self.analyzer.plates_confidence = self.gui.plates_confidence_spinBox.value()
-
-    def change_reading_attempts(self):
-        self.analyzer.reading_attempts = self.gui.reading_attempts_spinBox.value()
-
     def start_stream(self):
         if self.gui.stream_input_lineEdit.text() == "0":
             stream_input = 0
@@ -85,6 +77,18 @@ class MainGUI(QMainWindow):
     def stop_stream(self):
         self.analyzer.stop_stream = True
         self.stream_output.setPixmap(QPixmap(r"C:\Licenta\traffic-surveillance-backend\source\gui\images\background_stream.png"))
+
+    def process_video(self):
+        video_input = fr"{self.gui.video_input_lineEdit.text()}"
+        if self.gui.video_output_lineEdit.text() == "":
+            video_output = None
+        else:
+            video_output = fr"{self.gui.video_output_lineEdit.text()}"
+        thread = threading.Thread(target=self.analyzer.process_video, args=(video_input, video_output))
+        thread.start()
+        QMessageBox.information(self, 'Info', "Video processing started", QMessageBox.Ok)
+        thread.join()
+        QMessageBox.information(self, 'Info', "Video processing ended", QMessageBox.Ok)
 
     def toggle_boxes(self):
         if self.gui.boxes_checkBox.isChecked():
@@ -139,6 +143,18 @@ class MainGUI(QMainWindow):
             self.analyzer.show_counting_line = True
         else:
             self.analyzer.show_counting_line = False
+
+    def change_vehicle_confidence(self):
+        self.analyzer.model_confidence = self.gui.vehicles_confidence_spinBox.value()
+
+    def change_tracking_depth(self):
+        self.analyzer.tracking_depth = self.gui.tracking_depth_spinBox.value()
+
+    def change_plates_confidence(self):
+        self.analyzer.plates_confidence = self.gui.plates_confidence_spinBox.value()
+
+    def change_reading_attempts(self):
+        self.analyzer.reading_attempts = self.gui.reading_attempts_spinBox.value()
 
     def closeEvent(self, event):
         #  TODO: uncomment

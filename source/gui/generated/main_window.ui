@@ -296,7 +296,7 @@
        <property name="title">
         <string>Video</string>
        </property>
-       <widget class="QPushButton" name="pushButton_2">
+       <widget class="QPushButton" name="process_video_pushButton">
         <property name="geometry">
          <rect>
           <x>20</x>
@@ -320,9 +320,9 @@
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_6">
          <item>
-          <widget class="QLineEdit" name="lineEdit_2">
+          <widget class="QLineEdit" name="video_input_lineEdit">
            <property name="text">
-            <string/>
+            <string>C:\Licenta\data\raw_data\videos\video_9.mp4</string>
            </property>
            <property name="placeholderText">
             <string>Video input</string>
@@ -330,9 +330,9 @@
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="lineEdit_3">
+          <widget class="QLineEdit" name="video_output_lineEdit">
            <property name="text">
-            <string/>
+            <string>C:\Licenta\data\raw_data\videos\video_9_processed.mp4</string>
            </property>
            <property name="placeholderText">
             <string>Video output</string>
