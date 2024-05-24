@@ -66,6 +66,8 @@ class MainGUI(QMainWindow):
         self.gui.plates_confidence_spinBox.valueChanged.connect(self.change_plates_confidence)
         self.gui.reading_attempts_spinBox.valueChanged.connect(self.change_reading_attempts)
 
+        # messagebox cuda
+
     def start_stream(self):
         if self.gui.stream_input_lineEdit.text() == "0":
             stream_input = 0
@@ -84,11 +86,15 @@ class MainGUI(QMainWindow):
             video_output = None
         else:
             video_output = fr"{self.gui.video_output_lineEdit.text()}"
-        thread = threading.Thread(target=self.analyzer.process_video, args=(video_input, video_output))
+        generate_statistics = self.gui.generate_statistics_checkBox.isChecked()
+        thread = threading.Thread(target=self.analyzer.process_video, args=(video_input, video_output, generate_statistics))
         thread.start()
         QMessageBox.information(self, 'Info', "Video processing started", QMessageBox.Ok)
         thread.join()
-        QMessageBox.information(self, 'Info', "Video processing ended", QMessageBox.Ok)
+        if self.analyzer.statistics_generated or not generate_statistics:
+            QMessageBox.information(self, 'Info', "Video processing ended", QMessageBox.Ok)
+        else:
+            QMessageBox.information(self, 'Info', "Video processing ended. Statistics were not generated. Close Excel and try again.", QMessageBox.Ok)
 
     def toggle_boxes(self):
         if self.gui.boxes_checkBox.isChecked():

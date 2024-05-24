@@ -1,8 +1,12 @@
 import os
 
 import cv2
+import pandas as pd
 from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtWidgets import QMessageBox
 from easyocr import easyocr
+from openpyxl.reader.excel import load_workbook
+from pandas import ExcelWriter
 from ultralytics import YOLO
 
 from source.processing.counter import Counter
@@ -35,6 +39,8 @@ class Analyzer:
         self.image_width = 0
         self.counting_line_height = 0
         self.stop_stream = False
+        self.recorded_plate_numbers = []
+        self.statistics_generated = False
 
         #  processing options
         self.show_boxes = True
@@ -47,9 +53,8 @@ class Analyzer:
         self.show_ids = True
         self.show_counting_line = True
 
-    def process_video(self, input_path, output_path=None):
-        self.counter.reset()
-        self.previous_vehicles = []
+    def process_video(self, input_path, output_path=None, generate_statistics=True):
+        self.reset_data()
         if output_path is None:
             path = input_path.split(".mp4")[0:-1]
             output_path = "\\".join(path) + "_processed.mp4"  # same dir as input
@@ -63,18 +68,20 @@ class Analyzer:
         while ret:
             self.count_vehicles()
             frame = self.process_frame(frame)
-            self.update_previous_vehicles()
+            self.update_previous_vehicles(record_number_plates=True)
 
             out.write(frame)
             ret, frame = cap.read()
+
+        if generate_statistics:
+            self.generate_statistics(output_path)
 
         cap.release()
         out.release()
         cv2.destroyAllWindows()
 
     def process_stream(self, input_path):
-        self.counter.reset()
-        self.previous_vehicles = []
+        self.reset_data()
         self.stop_stream = False
         cap = cv2.VideoCapture(input_path)
         got_image_size = False
@@ -89,7 +96,7 @@ class Analyzer:
 
             self.count_vehicles()
             frame = self.process_frame(frame)
-            self.update_previous_vehicles()
+            self.update_previous_vehicles(record_number_plates=False)
 
             if self.stream_output is None:
                 frame = cv2.resize(frame, (STREAM_WIDTH, STREAM_HEIGHT))
@@ -238,10 +245,12 @@ class Analyzer:
         iou = intersection_area / float(box1_area + box2_area - intersection_area)
         return iou
 
-    def update_previous_vehicles(self):
+    def update_previous_vehicles(self, record_number_plates):
         updated_vehicles = []
         for vehicle in self.previous_vehicles:
             vehicle.frame_depth += 1
+            if record_number_plates and vehicle.number_plate is not None and vehicle.number_plate not in self.recorded_plate_numbers:
+                self.recorded_plate_numbers.append(vehicle.number_plate)
             if vehicle.frame_depth <= self.tracking_depth:
                 updated_vehicles.append(vehicle)
         self.previous_vehicles = updated_vehicles
@@ -323,3 +332,49 @@ class Analyzer:
         q_pixmap = QPixmap.fromImage(q_image)
 
         return q_pixmap
+
+    def generate_statistics(self, output_path):
+        try:
+            output_path = output_path.split("\\")
+            video_name = output_path[-1].split("_")
+            video_name = "_".join(video_name[0: -1])
+            output_path = "\\".join(output_path[0: -1])
+            output_path = output_path + f"\\{video_name}_statistics.xlsx"
+
+            whites = [' ' for _ in range(len(self.recorded_plate_numbers) - 1)]  # all arrays need to be the same length for some reason
+            data = {'Recorded plate numbers': self.recorded_plate_numbers,
+                    'Vehicles': [self.counter.vehicles] + whites,
+                    'Cars': [self.counter.cars] + whites,
+                    'Trucks': [self.counter.trucks] + whites,
+                    'Busses': [self.counter.busses] + whites,
+                    'Vans': [self.counter.vans] + whites,
+                    'First lane': [self.counter.first_lane] + whites,
+                    'Second lane': [self.counter.second_lane] + whites,
+                    'Third lane': [self.counter.third_lane] + whites,
+                    'Fourth lane': [self.counter.fourth_lane] + whites,
+                    'Fifth lane': [self.counter.fifth_lane] + whites}
+            df = pd.DataFrame(data)
+
+            writer = ExcelWriter(path=output_path)
+            df.to_excel(writer, sheet_name="Traffic statistics", index=False)
+            writer.close()
+
+            wb = load_workbook(output_path)
+            ws = wb.active
+            ws.column_dimensions['A'].width = 25
+            ws.column_dimensions['G'].width = 12
+            ws.column_dimensions['H'].width = 12
+            ws.column_dimensions['I'].width = 12
+            ws.column_dimensions['J'].width = 12
+            ws.column_dimensions['K'].width = 12
+            wb.save(output_path)
+            self.statistics_generated = True
+        except PermissionError:
+            self.statistics_generated = False
+
+    def reset_data(self):
+        self.counter.reset()
+        self.previous_vehicles = []
+        self.unassigned_id = 0
+        self.recorded_plate_numbers = []
+        self.statistics_generated = False
