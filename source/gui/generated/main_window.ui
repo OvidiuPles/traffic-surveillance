@@ -364,7 +364,7 @@
        <property name="title">
         <string>Track plate number</string>
        </property>
-       <widget class="QLineEdit" name="lineEdit_4">
+       <widget class="QLineEdit" name="tracked_plate_lineEdit">
         <property name="geometry">
          <rect>
           <x>20</x>
@@ -380,18 +380,31 @@
          <string>Plate number</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="pushButton_3">
+       <widget class="QWidget" name="">
         <property name="geometry">
          <rect>
           <x>20</x>
           <y>80</y>
-          <width>111</width>
-          <height>24</height>
+          <width>231</width>
+          <height>26</height>
          </rect>
         </property>
-        <property name="text">
-         <string>Start tracking</string>
-        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QPushButton" name="track_plate_pushButton">
+           <property name="text">
+            <string>Start tracking</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="clear_tracking_pushButton">
+           <property name="text">
+            <string>Clear tracking</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
       </widget>
      </item>

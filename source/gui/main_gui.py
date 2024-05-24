@@ -1,7 +1,8 @@
 import threading
 
-from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox
+from PySide6.QtCore import QTimer
+from PySide6.QtGui import QPixmap, Qt
+from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox, QDialog, QVBoxLayout
 
 from source.gui.generated.main_window import Ui_MainWindow
 from source.processing.analyzer import Analyzer
@@ -18,6 +19,8 @@ class MainGUI(QMainWindow):
 
         self.gui.start_stream_pushButton.clicked.connect(self.start_stream)
         self.gui.stop_stream_pushButton.clicked.connect(self.stop_stream)
+        self.gui.track_plate_pushButton.clicked.connect(self.track_plate_number)
+        self.gui.clear_tracking_pushButton.clicked.connect(self.clear_tracking)
 
         self.gui.process_video_pushButton.clicked.connect(self.process_video)
 
@@ -25,7 +28,7 @@ class MainGUI(QMainWindow):
         self.stream_output.setScaledContents(True)
         self.gui.image_layout.addWidget(self.stream_output)
         self.stream_output.setPixmap(QPixmap(r"C:\Licenta\traffic-surveillance-backend\source\gui\images\background_stream.png"))
-        self.analyzer = Analyzer(stream_output=self.stream_output)
+        self.analyzer = Analyzer(stream_output=self.stream_output, on_tracked_found=self.on_tracked_found)
 
         # processing options
         self.gui.boxes_checkBox.setChecked(self.analyzer.show_boxes)
@@ -68,6 +71,24 @@ class MainGUI(QMainWindow):
 
         # messagebox cuda
 
+    def clear_tracking(self):
+        self.analyzer.clear_tracking_list()
+        self.gui.tracked_plate_lineEdit.setText("")
+        self.nonmodal_message("Tracking list is cleared.")
+
+    def on_tracked_found(self, plate_number):
+        self.nonmodal_message(f"{plate_number} found. Recording started. It can be found in root directory")
+
+    def nonmodal_message(self, text):
+        # doesn't block the main window
+        message = QMessageBox(self)
+        message.setIcon(QMessageBox.Icon.Information)
+        message.setWindowTitle("Info")
+        message.setText(text)
+        message.setStandardButtons(QMessageBox.StandardButton.Ok)
+        message.setWindowModality(Qt.WindowModality.NonModal)
+        message.show()
+
     def start_stream(self):
         if self.gui.stream_input_lineEdit.text() == "0":
             stream_input = 0
@@ -89,12 +110,24 @@ class MainGUI(QMainWindow):
         generate_statistics = self.gui.generate_statistics_checkBox.isChecked()
         thread = threading.Thread(target=self.analyzer.process_video, args=(video_input, video_output, generate_statistics))
         thread.start()
-        QMessageBox.information(self, 'Info', "Video processing started", QMessageBox.Ok)
+        QMessageBox.information(self, 'Info', "Video processing started.", QMessageBox.Ok)
         thread.join()
         if self.analyzer.statistics_generated or not generate_statistics:
-            QMessageBox.information(self, 'Info', "Video processing ended", QMessageBox.Ok)
+            QMessageBox.information(self, 'Info', "Video processing ended.", QMessageBox.Ok)
         else:
             QMessageBox.information(self, 'Info', "Video processing ended. Statistics were not generated. Close Excel and try again.", QMessageBox.Ok)
+
+    def track_plate_number(self):
+        if self.gui.tracked_plate_lineEdit.text() != "":
+            plate_number = self.gui.tracked_plate_lineEdit.text()
+            if plate_number not in self.analyzer.tracked_plate_numbers:
+                self.analyzer.tracked_plate_numbers.append(plate_number)
+                self.nonmodal_message(f"{plate_number} added to tracking list.")
+            else:
+                self.nonmodal_message(f"{plate_number} is already tracked.")
+            self.gui.tracked_plate_lineEdit.setText("")
+        else:
+            self.nonmodal_message("Input plate number.")
 
     def toggle_boxes(self):
         if self.gui.boxes_checkBox.isChecked():

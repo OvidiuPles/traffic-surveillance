@@ -241,12 +241,25 @@ class Ui_MainWindow(object):
 
         self.groupBox = QGroupBox(self.layoutWidget3)
         self.groupBox.setObjectName(u"groupBox")
-        self.lineEdit_4 = QLineEdit(self.groupBox)
-        self.lineEdit_4.setObjectName(u"lineEdit_4")
-        self.lineEdit_4.setGeometry(QRect(20, 40, 231, 22))
-        self.pushButton_3 = QPushButton(self.groupBox)
-        self.pushButton_3.setObjectName(u"pushButton_3")
-        self.pushButton_3.setGeometry(QRect(20, 80, 111, 24))
+        self.tracked_plate_lineEdit = QLineEdit(self.groupBox)
+        self.tracked_plate_lineEdit.setObjectName(u"tracked_plate_lineEdit")
+        self.tracked_plate_lineEdit.setGeometry(QRect(20, 40, 231, 22))
+        self.widget = QWidget(self.groupBox)
+        self.widget.setObjectName(u"widget")
+        self.widget.setGeometry(QRect(20, 80, 231, 26))
+        self.horizontalLayout_4 = QHBoxLayout(self.widget)
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
+        self.track_plate_pushButton = QPushButton(self.widget)
+        self.track_plate_pushButton.setObjectName(u"track_plate_pushButton")
+
+        self.horizontalLayout_4.addWidget(self.track_plate_pushButton)
+
+        self.clear_tracking_pushButton = QPushButton(self.widget)
+        self.clear_tracking_pushButton.setObjectName(u"clear_tracking_pushButton")
+
+        self.horizontalLayout_4.addWidget(self.clear_tracking_pushButton)
+
 
         self.right_layout.addWidget(self.groupBox)
 
@@ -297,8 +310,9 @@ class Ui_MainWindow(object):
         self.video_output_lineEdit.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Video output", None))
         self.generate_statistics_checkBox.setText(QCoreApplication.translate("MainWindow", u"Generate statistics", None))
         self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Track plate number", None))
-        self.lineEdit_4.setText("")
-        self.lineEdit_4.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Plate number", None))
-        self.pushButton_3.setText(QCoreApplication.translate("MainWindow", u"Start tracking", None))
+        self.tracked_plate_lineEdit.setText("")
+        self.tracked_plate_lineEdit.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Plate number", None))
+        self.track_plate_pushButton.setText(QCoreApplication.translate("MainWindow", u"Start tracking", None))
+        self.clear_tracking_pushButton.setText(QCoreApplication.translate("MainWindow", u"Clear tracking", None))
     # retranslateUi
 
