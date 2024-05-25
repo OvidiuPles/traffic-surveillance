@@ -1,12 +1,9 @@
-import sys
-
-from PySide6.QtWidgets import QApplication
+import pyqtgraph as pg
 
 from source.gui.main_gui import MainGUI
 
-
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    app = pg.mkQApp()
     window = MainGUI()
     window.show()
-    sys.exit(app.exec())
+    app.exec()
