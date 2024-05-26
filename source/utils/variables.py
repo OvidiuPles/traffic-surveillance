@@ -1,3 +1,10 @@
+from source.utils.helpers import get_vehicles_model_path, get_plates_model_path, get_stream_background_path
+
+# paths for script running
+VEHICLES_MODEL_PATH = get_vehicles_model_path()
+PLATES_MODEL_PATH = get_plates_model_path()
+STREAM_BACKGROUND_PATH = get_stream_background_path()
+
 PIXELS_UPPER_CNT_LINE = 250  # number of pixels upper than mid of image, used for vehicle counting line
 THIRD_LINE = 1000  # third line on the road from right to left, only used for reading zone
 

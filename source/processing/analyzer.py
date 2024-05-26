@@ -1,5 +1,3 @@
-import os
-
 import cv2
 import pandas as pd
 from PySide6.QtGui import QImage, QPixmap
@@ -24,14 +22,10 @@ class Analyzer:
         self.reading_attempts = 2
 
         # models
-        self.text_reader = easyocr.Reader(['en'], gpu=False)
-        # vehicles_model_path = os.path.join('.', '.', '.', 'runs', 'detect', 'train11', 'weights', 'last.pt')
-        vehicles_model_path = os.path.join(r"C:\Licenta\traffic-surveillance-backend\runs\detect\train11\weights\last.pt")
-        self.vehicles_model = YOLO(vehicles_model_path)
-        #plates_model_path = os.path.join('.', '.', '.', 'runs', 'detect', 'train18', 'weights', 'last.pt')
-        plates_model_path = os.path.join(r"C:\Licenta\traffic-surveillance-backend\runs\detect\train18\weights\last.pt")
-        self.number_plates_model = YOLO(plates_model_path)
-        # self.model = YOLO("yolov8n.pt") # to be deleted from source root after distinction with custom model is done
+        self.text_reader = easyocr.Reader(['en'], gpu=True)
+        self.vehicles_model = YOLO(VEHICLES_MODEL_PATH)
+        self.number_plates_model = YOLO(PLATES_MODEL_PATH)
+        # self.model = YOLO("yolov8n.pt") # to be deleted from source/processing after distinction with custom model is done
 
         self.stream_output = stream_output
         self.counter = Counter()

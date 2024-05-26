@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1156</width>
-    <height>754</height>
+    <width>1160</width>
+    <height>762</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -54,6 +54,9 @@
           <layout class="QVBoxLayout" name="verticalLayout">
            <item>
             <widget class="QCheckBox" name="boxes_checkBox">
+             <property name="styleSheet">
+              <string notr="true">QCheckBox::indicator:unchecked {background-color: darkgray;}</string>
+             </property>
              <property name="text">
               <string>Vehicle boxes</string>
              </property>
@@ -61,6 +64,9 @@
            </item>
            <item>
             <widget class="QCheckBox" name="classes_checkBox">
+             <property name="styleSheet">
+              <string notr="true">QCheckBox::indicator:unchecked {background-color: darkgray;}</string>
+             </property>
              <property name="text">
               <string>Vehicle classes</string>
              </property>
@@ -68,6 +74,9 @@
            </item>
            <item>
             <widget class="QCheckBox" name="number_plates_checkBox">
+             <property name="styleSheet">
+              <string notr="true">QCheckBox::indicator:unchecked {background-color: darkgray;}</string>
+             </property>
              <property name="text">
               <string>Number plates</string>
              </property>
@@ -79,6 +88,12 @@
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <item>
             <widget class="QCheckBox" name="total_counting_checkBox">
+             <property name="autoFillBackground">
+              <bool>false</bool>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QCheckBox::indicator:unchecked {background-color: darkgray;}</string>
+             </property>
              <property name="text">
               <string>Total counting</string>
              </property>
@@ -86,6 +101,9 @@
            </item>
            <item>
             <widget class="QCheckBox" name="class_counting_checkBox">
+             <property name="styleSheet">
+              <string notr="true">QCheckBox::indicator:unchecked {background-color: darkgray;}</string>
+             </property>
              <property name="text">
               <string>Class counting</string>
              </property>
@@ -93,6 +111,9 @@
            </item>
            <item>
             <widget class="QCheckBox" name="lane_counting_checkBox">
+             <property name="styleSheet">
+              <string notr="true">QCheckBox::indicator:unchecked {background-color: darkgray;}</string>
+             </property>
              <property name="text">
               <string>Lane counting</string>
              </property>
@@ -104,16 +125,22 @@
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
             <widget class="QCheckBox" name="lanes_checkBox">
+             <property name="styleSheet">
+              <string notr="true">QCheckBox::indicator:unchecked {background-color: darkgray;}</string>
+             </property>
              <property name="text">
               <string>Lanes</string>
              </property>
              <property name="checked">
-              <bool>true</bool>
+              <bool>false</bool>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QCheckBox" name="ids_checkBox">
+             <property name="styleSheet">
+              <string notr="true">QCheckBox::indicator:unchecked {background-color: darkgray;}</string>
+             </property>
              <property name="text">
               <string>Internal ID</string>
              </property>
@@ -121,6 +148,9 @@
            </item>
            <item>
             <widget class="QCheckBox" name="counting_line_checkBox">
+             <property name="styleSheet">
+              <string notr="true">QCheckBox::indicator:unchecked {background-color: darkgray;}</string>
+             </property>
              <property name="text">
               <string>Counting line</string>
              </property>
@@ -257,7 +287,7 @@
          </rect>
         </property>
         <property name="text">
-         <string>C:\Licenta\data\raw_data\videos\video_5.mp4</string>
+         <string/>
         </property>
         <property name="placeholderText">
          <string>Stream input</string>
@@ -322,7 +352,7 @@
          <item>
           <widget class="QLineEdit" name="video_input_lineEdit">
            <property name="text">
-            <string>C:\Licenta\data\raw_data\videos\video_9.mp4</string>
+            <string/>
            </property>
            <property name="placeholderText">
             <string>Video input</string>
@@ -332,7 +362,7 @@
          <item>
           <widget class="QLineEdit" name="video_output_lineEdit">
            <property name="text">
-            <string>C:\Licenta\data\raw_data\videos\video_9_processed.mp4</string>
+            <string/>
            </property>
            <property name="placeholderText">
             <string>Video output</string>
@@ -349,6 +379,9 @@
           <width>121</width>
           <height>20</height>
          </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QCheckBox::indicator:unchecked {background-color: darkgray;}</string>
         </property>
         <property name="text">
          <string>Generate statistics</string>
@@ -380,7 +413,7 @@
          <string>Plate number</string>
         </property>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>20</x>
@@ -416,7 +449,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1156</width>
+     <width>1160</width>
      <height>22</height>
     </rect>
    </property>

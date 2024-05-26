@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox, QDialog, QVBoxLa
 
 from source.gui.generated.main_window import Ui_MainWindow
 from source.processing.analyzer import Analyzer
+from source.utils.variables import STREAM_BACKGROUND_PATH
 
 
 #  pyside6-uic source/gui/generated/main_window.ui -o source/gui/generated/main_window.py
@@ -27,7 +28,7 @@ class MainGUI(QMainWindow):
         self.stream_output = QLabel()
         self.stream_output.setScaledContents(True)
         self.gui.image_layout.addWidget(self.stream_output)
-        self.stream_output.setPixmap(QPixmap(r"C:\Licenta\traffic-surveillance-backend\source\gui\images\background_stream.png"))
+        self.stream_output.setPixmap(QPixmap(STREAM_BACKGROUND_PATH))
         self.analyzer = Analyzer(stream_output=self.stream_output, on_tracked_found=self.on_tracked_found)
 
         # processing options
@@ -99,7 +100,7 @@ class MainGUI(QMainWindow):
 
     def stop_stream(self):
         self.analyzer.stop_stream = True
-        self.stream_output.setPixmap(QPixmap(r"C:\Licenta\traffic-surveillance-backend\source\gui\images\background_stream.png"))
+        self.stream_output.setPixmap(QPixmap(STREAM_BACKGROUND_PATH))
 
     def process_video(self):
         video_input = fr"{self.gui.video_input_lineEdit.text()}"
@@ -115,7 +116,9 @@ class MainGUI(QMainWindow):
         if self.analyzer.statistics_generated or not generate_statistics:
             QMessageBox.information(self, 'Info', "Video processing ended.", QMessageBox.Ok)
         else:
-            QMessageBox.information(self, 'Info', "Video processing ended. Statistics were not generated. Close Excel and try again.", QMessageBox.Ok)
+            QMessageBox.information(self, 'Info',
+                                    "Video processing ended. Statistics were not generated. Check video paths, close Excel and try again.",
+                                    QMessageBox.Ok)
 
     def track_plate_number(self):
         if self.gui.tracked_plate_lineEdit.text() != "":
@@ -196,10 +199,9 @@ class MainGUI(QMainWindow):
         self.analyzer.reading_attempts = self.gui.reading_attempts_spinBox.value()
 
     def closeEvent(self, event):
-        #  TODO: uncomment
-        # response = QMessageBox.question(self, 'Quit', "Are you sure you want to quit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        # if response == QMessageBox.Yes:
-        #     event.accept()
-        self.analyzer.stop_stream = True
-    # else:
-    #     event.ignore()
+        response = QMessageBox.question(self, 'Quit', "Are you sure you want to quit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if response == QMessageBox.Yes:
+            event.accept()
+            self.analyzer.stop_stream = True
+        else:
+            event.ignore()

@@ -24,7 +24,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1156, 754)
+        MainWindow.resize(1160, 762)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.gridLayoutWidget = QWidget(self.centralwidget)
@@ -51,16 +51,19 @@ class Ui_MainWindow(object):
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.boxes_checkBox = QCheckBox(self.layoutWidget1)
         self.boxes_checkBox.setObjectName(u"boxes_checkBox")
+        self.boxes_checkBox.setStyleSheet(u"QCheckBox::indicator:unchecked {background-color: darkgray;}")
 
         self.verticalLayout.addWidget(self.boxes_checkBox)
 
         self.classes_checkBox = QCheckBox(self.layoutWidget1)
         self.classes_checkBox.setObjectName(u"classes_checkBox")
+        self.classes_checkBox.setStyleSheet(u"QCheckBox::indicator:unchecked {background-color: darkgray;}")
 
         self.verticalLayout.addWidget(self.classes_checkBox)
 
         self.number_plates_checkBox = QCheckBox(self.layoutWidget1)
         self.number_plates_checkBox.setObjectName(u"number_plates_checkBox")
+        self.number_plates_checkBox.setStyleSheet(u"QCheckBox::indicator:unchecked {background-color: darkgray;}")
 
         self.verticalLayout.addWidget(self.number_plates_checkBox)
 
@@ -71,16 +74,20 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
         self.total_counting_checkBox = QCheckBox(self.layoutWidget1)
         self.total_counting_checkBox.setObjectName(u"total_counting_checkBox")
+        self.total_counting_checkBox.setAutoFillBackground(False)
+        self.total_counting_checkBox.setStyleSheet(u"QCheckBox::indicator:unchecked {background-color: darkgray;}")
 
         self.verticalLayout_2.addWidget(self.total_counting_checkBox)
 
         self.class_counting_checkBox = QCheckBox(self.layoutWidget1)
         self.class_counting_checkBox.setObjectName(u"class_counting_checkBox")
+        self.class_counting_checkBox.setStyleSheet(u"QCheckBox::indicator:unchecked {background-color: darkgray;}")
 
         self.verticalLayout_2.addWidget(self.class_counting_checkBox)
 
         self.lane_counting_checkBox = QCheckBox(self.layoutWidget1)
         self.lane_counting_checkBox.setObjectName(u"lane_counting_checkBox")
+        self.lane_counting_checkBox.setStyleSheet(u"QCheckBox::indicator:unchecked {background-color: darkgray;}")
 
         self.verticalLayout_2.addWidget(self.lane_counting_checkBox)
 
@@ -91,17 +98,20 @@ class Ui_MainWindow(object):
         self.verticalLayout_3.setObjectName(u"verticalLayout_3")
         self.lanes_checkBox = QCheckBox(self.layoutWidget1)
         self.lanes_checkBox.setObjectName(u"lanes_checkBox")
-        self.lanes_checkBox.setChecked(True)
+        self.lanes_checkBox.setStyleSheet(u"QCheckBox::indicator:unchecked {background-color: darkgray;}")
+        self.lanes_checkBox.setChecked(False)
 
         self.verticalLayout_3.addWidget(self.lanes_checkBox)
 
         self.ids_checkBox = QCheckBox(self.layoutWidget1)
         self.ids_checkBox.setObjectName(u"ids_checkBox")
+        self.ids_checkBox.setStyleSheet(u"QCheckBox::indicator:unchecked {background-color: darkgray;}")
 
         self.verticalLayout_3.addWidget(self.ids_checkBox)
 
         self.counting_line_checkBox = QCheckBox(self.layoutWidget1)
         self.counting_line_checkBox.setObjectName(u"counting_line_checkBox")
+        self.counting_line_checkBox.setStyleSheet(u"QCheckBox::indicator:unchecked {background-color: darkgray;}")
 
         self.verticalLayout_3.addWidget(self.counting_line_checkBox)
 
@@ -235,6 +245,7 @@ class Ui_MainWindow(object):
         self.generate_statistics_checkBox = QCheckBox(self.streaming_groupBox_2)
         self.generate_statistics_checkBox.setObjectName(u"generate_statistics_checkBox")
         self.generate_statistics_checkBox.setGeometry(QRect(20, 110, 121, 20))
+        self.generate_statistics_checkBox.setStyleSheet(u"QCheckBox::indicator:unchecked {background-color: darkgray;}")
         self.generate_statistics_checkBox.setChecked(True)
 
         self.right_layout.addWidget(self.streaming_groupBox_2)
@@ -244,18 +255,18 @@ class Ui_MainWindow(object):
         self.tracked_plate_lineEdit = QLineEdit(self.groupBox)
         self.tracked_plate_lineEdit.setObjectName(u"tracked_plate_lineEdit")
         self.tracked_plate_lineEdit.setGeometry(QRect(20, 40, 231, 22))
-        self.widget = QWidget(self.groupBox)
-        self.widget.setObjectName(u"widget")
-        self.widget.setGeometry(QRect(20, 80, 231, 26))
-        self.horizontalLayout_4 = QHBoxLayout(self.widget)
+        self.layoutWidget6 = QWidget(self.groupBox)
+        self.layoutWidget6.setObjectName(u"layoutWidget6")
+        self.layoutWidget6.setGeometry(QRect(20, 80, 231, 26))
+        self.horizontalLayout_4 = QHBoxLayout(self.layoutWidget6)
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
         self.horizontalLayout_4.setContentsMargins(0, 0, 0, 0)
-        self.track_plate_pushButton = QPushButton(self.widget)
+        self.track_plate_pushButton = QPushButton(self.layoutWidget6)
         self.track_plate_pushButton.setObjectName(u"track_plate_pushButton")
 
         self.horizontalLayout_4.addWidget(self.track_plate_pushButton)
 
-        self.clear_tracking_pushButton = QPushButton(self.widget)
+        self.clear_tracking_pushButton = QPushButton(self.layoutWidget6)
         self.clear_tracking_pushButton.setObjectName(u"clear_tracking_pushButton")
 
         self.horizontalLayout_4.addWidget(self.clear_tracking_pushButton)
@@ -269,7 +280,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 1156, 22))
+        self.menubar.setGeometry(QRect(0, 0, 1160, 22))
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
@@ -298,15 +309,15 @@ class Ui_MainWindow(object):
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"Number plates confidence", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"Plates reading attempts", None))
         self.streaming_groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Streaming", None))
-        self.stream_input_lineEdit.setText(QCoreApplication.translate("MainWindow", u"C:\\Licenta\\data\\raw_data\\videos\\video_5.mp4", None))
+        self.stream_input_lineEdit.setText("")
         self.stream_input_lineEdit.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Stream input", None))
         self.start_stream_pushButton.setText(QCoreApplication.translate("MainWindow", u"Start stream", None))
         self.stop_stream_pushButton.setText(QCoreApplication.translate("MainWindow", u"Stop stream", None))
         self.streaming_groupBox_2.setTitle(QCoreApplication.translate("MainWindow", u"Video", None))
         self.process_video_pushButton.setText(QCoreApplication.translate("MainWindow", u"Process video", None))
-        self.video_input_lineEdit.setText(QCoreApplication.translate("MainWindow", u"C:\\Licenta\\data\\raw_data\\videos\\video_9.mp4", None))
+        self.video_input_lineEdit.setText("")
         self.video_input_lineEdit.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Video input", None))
-        self.video_output_lineEdit.setText(QCoreApplication.translate("MainWindow", u"C:\\Licenta\\data\\raw_data\\videos\\video_9_processed.mp4", None))
+        self.video_output_lineEdit.setText("")
         self.video_output_lineEdit.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Video output", None))
         self.generate_statistics_checkBox.setText(QCoreApplication.translate("MainWindow", u"Generate statistics", None))
         self.groupBox.setTitle(QCoreApplication.translate("MainWindow", u"Track plate number", None))
