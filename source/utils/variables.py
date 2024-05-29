@@ -1,3 +1,10 @@
+from source.utils.helpers import get_vehicles_model_path, get_plates_model_path, get_stream_background_path
+
+# paths for script running
+VEHICLES_MODEL_PATH = get_vehicles_model_path()
+PLATES_MODEL_PATH = get_plates_model_path()
+STREAM_BACKGROUND_PATH = get_stream_background_path()
+
 PIXELS_UPPER_CNT_LINE = 250  # number of pixels upper than mid of image, used for vehicle counting line
 THIRD_LINE = 1000  # third line on the road from right to left, only used for reading zone
 
@@ -9,7 +16,7 @@ MAX_DIST_TRACKING_X = 300
 MAX_DIST_TRACKING_Y = 600
 
 MAX_ID = 100
-MAX_READING_ATTEMPTS = 2
+FRAMES_TO_RECORD = 100
 
 dict_letter_to_figure = {
     'O': '0',
@@ -57,3 +64,10 @@ LINE5_PT2 = (0, int(DEFAULT_FRAME_HEIGHT / 2 + 70))
 LINE6_PT1 = (800, 0)
 LINE6_PT2 = (0, int(DEFAULT_FRAME_HEIGHT / 4))
 
+class_colors = {
+    0: (255, 255, 0),  # small car
+    1: (0, 255, 255),  # truck
+    2: (0, 0, 255),  # bus
+    3: (255, 0, 255),  # van
+    4: (0, 255, 0),  # counting_line
+}
