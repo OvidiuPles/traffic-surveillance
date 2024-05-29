@@ -56,5 +56,4 @@ DataFactory.video_to_frames(video_path=r'C:\Licenta\data\raw_data\videos\video_6
                             output_path=r'C:\Licenta\data\raw_data\videos\wtf',
                             n=1)
 
-
 # DataFactory.modify_class_labels(r"C:\Licenta\data\raw_data\yolo_labels\5", 5, 4)

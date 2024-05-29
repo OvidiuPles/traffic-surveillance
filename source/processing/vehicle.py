@@ -10,5 +10,5 @@ class Vehicle:
         self.is_counted = is_counted
         self.number_plate = number_plate
         self.reading_attempts = reading_attempts
-        self.class_id = class_id  # updated on every prediction, even if matching vehicle is found, because it needs to be accurate for counting
+        self.class_id = class_id  # updated on every prediction, even if matching vehicle is found, because it needs to be accurate for class counting
         self.tracked_and_found = tracked_and_found

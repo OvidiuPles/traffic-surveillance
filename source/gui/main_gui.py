@@ -1,8 +1,8 @@
 import threading
 
-from PySide6.QtCore import QTimer
+import torch
 from PySide6.QtGui import QPixmap, Qt
-from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox, QDialog, QVBoxLayout
+from PySide6.QtWidgets import QLabel, QMainWindow, QMessageBox, QApplication
 
 from source.gui.generated.main_window import Ui_MainWindow
 from source.processing.analyzer import Analyzer
@@ -18,18 +18,26 @@ class MainGUI(QMainWindow):
         self.gui = Ui_MainWindow()
         self.gui.setupUi(self)
 
-        self.gui.start_stream_pushButton.clicked.connect(self.start_stream)
-        self.gui.stop_stream_pushButton.clicked.connect(self.stop_stream)
-        self.gui.track_plate_pushButton.clicked.connect(self.track_plate_number)
-        self.gui.clear_tracking_pushButton.clicked.connect(self.clear_tracking)
+        screen_width = 1150
+        screen_height = 750
+        self.setFixedSize(screen_width, screen_height)
+        app = QApplication.instance()
+        screen_size = app.primaryScreen().availableGeometry()
+        screen_center = screen_size.center()
+        self.move(screen_center.x() - screen_width * 0.5, screen_center.y() - screen_height * 0.5)
 
-        self.gui.process_video_pushButton.clicked.connect(self.process_video)
-
+        self.analyzer = Analyzer(on_tracked_found=self.on_tracked_found)
         self.stream_output = QLabel()
         self.stream_output.setScaledContents(True)
         self.gui.image_layout.addWidget(self.stream_output)
         self.stream_output.setPixmap(QPixmap(STREAM_BACKGROUND_PATH))
-        self.analyzer = Analyzer(stream_output=self.stream_output, on_tracked_found=self.on_tracked_found)
+
+        # buttons
+        self.gui.start_stream_pushButton.clicked.connect(self.start_stream)
+        self.gui.stop_stream_pushButton.clicked.connect(self.stop_stream)
+        self.gui.track_plate_pushButton.clicked.connect(self.track_plate_number)
+        self.gui.clear_tracking_pushButton.clicked.connect(self.clear_tracking)
+        self.gui.process_video_pushButton.clicked.connect(self.process_video)
 
         # processing options
         self.gui.boxes_checkBox.setChecked(self.analyzer.show_boxes)
@@ -60,7 +68,7 @@ class MainGUI(QMainWindow):
         self.gui.counting_line_checkBox.stateChanged.connect(self.toggle_counting_line)
 
         # processing parameters
-        self.gui.vehicles_confidence_spinBox.setValue(self.analyzer.model_confidence)
+        self.gui.vehicles_confidence_spinBox.setValue(self.analyzer.vehicles_confidence)
         self.gui.tracking_depth_spinBox.setValue(self.analyzer.tracking_depth)
         self.gui.plates_confidence_spinBox.setValue(self.analyzer.plates_confidence)
         self.gui.reading_attempts_spinBox.setValue(self.analyzer.reading_attempts)
@@ -70,32 +78,15 @@ class MainGUI(QMainWindow):
         self.gui.plates_confidence_spinBox.valueChanged.connect(self.change_plates_confidence)
         self.gui.reading_attempts_spinBox.valueChanged.connect(self.change_reading_attempts)
 
-        # messagebox cuda
-
-    def clear_tracking(self):
-        self.analyzer.clear_tracking_list()
-        self.gui.tracked_plate_lineEdit.setText("")
-        self.nonmodal_message("Tracking list is cleared.")
-
-    def on_tracked_found(self, plate_number):
-        self.nonmodal_message(f"{plate_number} found. Recording started. It can be found in root directory")
-
-    def nonmodal_message(self, text):
-        # doesn't block the main window
-        message = QMessageBox(self)
-        message.setIcon(QMessageBox.Icon.Information)
-        message.setWindowTitle("Info")
-        message.setText(text)
-        message.setStandardButtons(QMessageBox.StandardButton.Ok)
-        message.setWindowModality(Qt.WindowModality.NonModal)
-        message.show()
+        if not torch.cuda.is_available():
+            self.nonmodal_message("CUDA not available - defaulting to CPU. Note: This module is much faster with a GPU.")
 
     def start_stream(self):
         if self.gui.stream_input_lineEdit.text() == "0":
             stream_input = 0
         else:
             stream_input = fr"{self.gui.stream_input_lineEdit.text()}"
-        self.analyzer.process_stream(stream_input)
+        self.analyzer.process_stream(stream_input, self.stream_output)
         self.stop_stream()
 
     def stop_stream(self):
@@ -113,12 +104,7 @@ class MainGUI(QMainWindow):
         thread.start()
         QMessageBox.information(self, 'Info', "Video processing started.", QMessageBox.Ok)
         thread.join()
-        if self.analyzer.statistics_generated or not generate_statistics:
-            QMessageBox.information(self, 'Info', "Video processing ended.", QMessageBox.Ok)
-        else:
-            QMessageBox.information(self, 'Info',
-                                    "Video processing ended. Statistics were not generated. Check video paths, close Excel and try again.",
-                                    QMessageBox.Ok)
+        self.on_video_processing_end()
 
     def track_plate_number(self):
         if self.gui.tracked_plate_lineEdit.text() != "":
@@ -131,6 +117,30 @@ class MainGUI(QMainWindow):
             self.gui.tracked_plate_lineEdit.setText("")
         else:
             self.nonmodal_message("Input plate number.")
+
+    def clear_tracking(self):
+        self.analyzer.clear_tracking_list()
+        self.gui.tracked_plate_lineEdit.setText("")
+        self.nonmodal_message("Tracking list is cleared.")
+
+    def on_tracked_found(self, plate_number):
+        self.nonmodal_message(f"{plate_number} found. Recording started. It can be found in root directory.")
+
+    def on_video_processing_end(self):
+        if self.analyzer.statistics_generated:
+            self.nonmodal_message("Video processing ended.")
+        else:
+            self.nonmodal_message("Video processing ended. Statistics were not generated. Check video paths, close Excel and try again.")
+
+    def nonmodal_message(self, text):
+        # doesn't block the main window
+        message = QMessageBox(self)
+        message.setIcon(QMessageBox.Icon.Information)
+        message.setWindowTitle("Info")
+        message.setText(text)
+        message.setStandardButtons(QMessageBox.StandardButton.Ok)
+        message.setWindowModality(Qt.WindowModality.NonModal)
+        message.show()
 
     def toggle_boxes(self):
         if self.gui.boxes_checkBox.isChecked():

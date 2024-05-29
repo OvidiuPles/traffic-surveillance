@@ -1,3 +1,5 @@
+import os
+
 import cv2
 import pandas as pd
 from PySide6.QtGui import QImage, QPixmap
@@ -9,40 +11,27 @@ from ultralytics import YOLO
 from source.processing.counter import Counter
 from source.processing.stream_recorder import StreamRecorder
 from source.processing.vehicle import Vehicle
-from source.utils.colors import class_colors
 from source.utils.variables import *
 
 
 class Analyzer:
-    def __init__(self, confidence=0.5, tracking_depth=12, on_tracked_found=None, stream_output=None):
+    def __init__(self, vehicles_confidence=0.5, tracking_depth=12, plates_confidence=0.4, reading_attempts=2, on_tracked_found=None):
         # processing parameters
-        self.model_confidence = confidence
+        self.vehicles_confidence = vehicles_confidence
         self.tracking_depth = tracking_depth  # number of previous frames to keep for vehicle tracking
-        self.plates_confidence = 0.4
-        self.reading_attempts = 2
+        self.plates_confidence = plates_confidence
+        self.reading_attempts = reading_attempts  # attempts to read plate numbers
 
         # models
         self.text_reader = easyocr.Reader(['en'], gpu=True)
         self.vehicles_model = YOLO(VEHICLES_MODEL_PATH)
         self.number_plates_model = YOLO(PLATES_MODEL_PATH)
+        try:
+            self.vehicles_model.to('cuda')
+            self.number_plates_model.to('cuda')
+        except AssertionError:
+            pass  # defaulting to cpu
         # self.model = YOLO("yolov8n.pt") # to be deleted from source/processing after distinction with custom model is done
-
-        self.stream_output = stream_output
-        self.counter = Counter()
-        self.previous_vehicles = []
-        self.unassigned_id = 0
-        self.image_height = 0
-        self.image_width = 0
-        self.counting_line_height = 0
-        self.stop_stream = False
-        self.statistics_generated = False
-        self.stream_recorder = StreamRecorder()
-
-        self.recorded_plate_numbers = []
-        self.recorded_tracked_and_found = []
-
-        self.tracked_plate_numbers = []
-        self.on_tracked_found = on_tracked_found
 
         #  processing options
         self.show_boxes = True
@@ -54,6 +43,20 @@ class Analyzer:
         self.show_lanes = True
         self.show_ids = True
         self.show_counting_line = True
+
+        self.stream_recorder = StreamRecorder()
+        self.counter = Counter()
+        self.previous_vehicles = []
+        self.recorded_plate_numbers = []
+        self.tracked_plate_numbers = []
+        self.recorded_tracked_and_found = []
+        self.unassigned_id = 0
+        self.image_height = 0
+        self.image_width = 0
+        self.counting_line_height = 0
+        self.stop_stream = False
+        self.statistics_generated = False
+        self.on_tracked_found = on_tracked_found
 
     def process_video(self, input_path, output_path=None, generate_statistics=True):
         self.reset_data()
@@ -70,7 +73,7 @@ class Analyzer:
         while ret:
             self.count_vehicles()
             frame = self.process_frame(frame)
-            self.update_previous_vehicles(record_number_plates=True)
+            self.update_previous_vehicles(streaming=False)
 
             out.write(frame)
             ret, frame = cap.read()
@@ -82,7 +85,7 @@ class Analyzer:
         out.release()
         cv2.destroyAllWindows()
 
-    def process_stream(self, input_path):
+    def process_stream(self, input_path, output):
         self.reset_data()
         self.stop_stream = False
         cap = cv2.VideoCapture(input_path)
@@ -98,7 +101,7 @@ class Analyzer:
 
             self.count_vehicles()
             frame = self.process_frame(frame)
-            self.update_previous_vehicles(record_number_plates=False)
+            self.update_previous_vehicles(streaming=True)
 
             if self.stream_recorder.recording:
                 self.stream_recorder.out.write(frame)
@@ -106,12 +109,12 @@ class Analyzer:
                 if self.stream_recorder.recorded_frames >= FRAMES_TO_RECORD:
                     self.stream_recorder.reset()
 
-            if self.stream_output is None:
+            if output is None:
                 frame = cv2.resize(frame, (STREAM_WIDTH, STREAM_HEIGHT))
                 cv2.imshow('Stream', frame)
             else:
                 frame = self.convert_cv2_to_qpixmap(frame)
-                self.stream_output.setPixmap(frame)
+                output.setPixmap(frame)
             if cv2.waitKey(1) & 0xFF == ord('q') or self.stop_stream is True:
                 break
 
@@ -146,7 +149,7 @@ class Analyzer:
 
         for result in results.boxes.data.tolist():
             x1, y1, x2, y2, score, class_id = result
-            if score >= self.model_confidence and self.valid_width(x1, x2, y2):
+            if score >= self.vehicles_confidence and self.vehicle_valid_width(x1, x2, y2):
                 vehicle_id, tracked_and_found = self.assign_vehicle_id(vehicle_box=[x1, y1, x2, y2], class_id=class_id)
                 box_color = class_colors[class_id] if not tracked_and_found else class_colors[2]
                 plates_color = class_colors[2] if not tracked_and_found else class_colors[3]
@@ -264,14 +267,14 @@ class Analyzer:
         iou = intersection_area / float(box1_area + box2_area - intersection_area)
         return iou
 
-    def update_previous_vehicles(self, record_number_plates):
+    def update_previous_vehicles(self, streaming):
         updated_vehicles = []
         for vehicle in self.previous_vehicles:
             vehicle.frame_depth += 1
-            if record_number_plates and vehicle.number_plate is not None and vehicle.number_plate not in self.recorded_plate_numbers:
-                self.recorded_plate_numbers.append(vehicle.number_plate)
+            if not streaming and vehicle.number_plate is not None and vehicle.number_plate not in self.recorded_plate_numbers:
+                self.recorded_plate_numbers.append(vehicle.number_plate)  # record all plate numbers only for video
             if vehicle.number_plate in self.tracked_plate_numbers and not vehicle.tracked_and_found:
-                if not record_number_plates:  # notification and recording only for streaming
+                if streaming:  # notification and video recording (of tracked and found vehicles) only for streaming
                     self.on_tracked_found(vehicle.number_plate)
                     self.start_recording(name=vehicle.number_plate)
                 else:
@@ -288,7 +291,7 @@ class Analyzer:
     @staticmethod
     def sanitize_number_plate(number_plate):
         if number_plate[0].isdigit() or len(number_plate.replace(" ", "")) != 7:
-            return number_plate  # unknown format, can't sanitize
+            return number_plate  # unknown format, cannot sanitize
 
         sanitized_number_plate = ""
         initial_number_plate = number_plate
@@ -344,7 +347,7 @@ class Analyzer:
 
         return frame
 
-    def valid_width(self, x1, x2, y2):
+    def vehicle_valid_width(self, x1, x2, y2):
         width = x2 - x1
         if (y2 > self.counting_line_height and width < 340) or (y2 < self.counting_line_height and width < 200):
             return False
@@ -403,6 +406,24 @@ class Analyzer:
         except PermissionError:
             self.statistics_generated = False
 
+    def start_recording(self, name):
+        name = name.replace(" ", "_") + ".mp4"
+        no_videos_same_name = 0
+
+        if not os.path.exists(os.getcwd() + "\\recordings"):
+            os.makedirs(os.getcwd() + "\\recordings")
+
+        for video in os.listdir(os.getcwd() + "\\recordings"):
+            if name in video:
+                no_videos_same_name += 1
+        if no_videos_same_name != 0:
+            name = str(no_videos_same_name) + "_" + name
+
+        output_path = os.getcwd() + "\\recordings" + f"\\{name}"
+
+        self.stream_recorder.out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'MP4V'), 11, (self.image_width, self.image_height))
+        self.stream_recorder.recording = True
+
     def reset_data(self):
         self.counter.reset()
         self.previous_vehicles = []
@@ -422,21 +443,3 @@ class Analyzer:
 
         if self.stream_recorder.recording:
             self.stream_recorder.reset()
-
-    def start_recording(self, name):
-        name = name.replace(" ", "_") + ".mp4"
-        no_videos_same_name = 0
-
-        if not os.path.exists(os.getcwd() + "\\recordings"):
-            os.makedirs(os.getcwd() + "\\recordings")
-
-        for video in os.listdir(os.getcwd() + "\\recordings"):
-            if name in video:
-                no_videos_same_name += 1
-        if no_videos_same_name != 0:
-            name = str(no_videos_same_name) + "_" + name
-
-        output_path = os.getcwd() + "\\recordings" + f"\\{name}"
-
-        self.stream_recorder.out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'MP4V'), 11, (self.image_width, self.image_height))
-        self.stream_recorder.recording = True
