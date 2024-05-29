@@ -1,3 +1,6 @@
 C:/Licenta/traffic-surveillance/build/* filter=lfs diff=lfs merge=lfs -text
 C:/Licenta/traffic-surveillance/dist/* filter=lfs diff=lfs merge=lfs -text
 dev_setup/exe_gen_extra_files/ultralytics/* filter=lfs diff=lfs merge=lfs -text
+build/** filter=lfs diff=lfs merge=lfs -text
+dist/** filter=lfs diff=lfs merge=lfs -text
+*.exe filter=lfs diff=lfs merge=lfs -text
