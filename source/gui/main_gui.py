@@ -197,7 +197,7 @@ class MainGUI(QMainWindow):
             self.analyzer.show_counting_line = False
 
     def change_vehicle_confidence(self):
-        self.analyzer.model_confidence = self.gui.vehicles_confidence_spinBox.value()
+        self.analyzer.vehicles_confidence = self.gui.vehicles_confidence_spinBox.value()
 
     def change_tracking_depth(self):
         self.analyzer.tracking_depth = self.gui.tracking_depth_spinBox.value()
