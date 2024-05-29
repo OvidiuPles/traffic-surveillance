@@ -5,6 +5,5 @@ source/utils/__pycache__/
 source/gui/__pycache__/
 source/gui/generated/__pycache__/
 recordings/
-dev_setup/exe_gen_extra_files/
 build
 
