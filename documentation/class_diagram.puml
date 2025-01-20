@@ -1,0 +1,194 @@
+@startuml
+
+class Analyzer {
+    +counter
+    +counting_line_height: int
+    +image_height: int
+    +image_width: int
+    +number_plates: list
+    +on_tracked_found: NoneType
+    +plates_confidence: float
+    +previous_vehicles: list
+    +reading_attempts: int
+    +recorded_plate_numbers: list
+    +recorded_tracked_and_found: list
+    +show_boxes: bool
+    +show_class_counting: bool
+    +show_classes: bool
+    +show_counting_line: bool
+    +show_id: bool
+    +show_lane_counting: bool
+    +show_lanes: bool
+    +show_number_plates: bool
+    +show_total_counting: bool
+    +statistics_generated: bool
+    +stop_stream: bool
+    +stream_recorder
+    +text_reader: Reader
+    +tracked_plate_numbers: list
+    +tracking_depth: int
+    +unassigned_id: int
+    +vehicles_confidence: float
+    +vehicles_model: YOLO
+
+    +assign_number_plate(vehicle_id, frame)
+    +assign_vehicle_id(vehicle_box, class_id)
+    +calculate_iou(box1, box2)
+    +clear_tracking_list()
+    +convert_cv2_to_qpixmap(cv_img)
+    +count_vehicles()
+    +draw_lane_lines(frame)
+    +generate_statistics(output_path)
+    +is_in_reading_zone(x2, y2)
+    +preprocess_plate(image)
+    +process_frame(frame)
+    +process_stream(input_path, output)
+    +process_video(input_path, output_path, generate_statistics)
+    +reset_data()
+    +sanitize_number_plate(number_plate)
+    +start_recording(streaming)
+    +update_previous_vehicles(streaming)
+    +valid_number_plate(plate)
+    +vehicle_in_counting_zone(y1, y2)
+    +vehicle_valid_width(x1, x2, y2)
+}
+
+class Counter {
+    +buses: int
+    +cars: int
+    +fifth_lane: int
+    +first_lane: int
+    +fourth_lane: int
+    +second_lane: int
+    +third_lane: int
+    +trucks: int
+    +vans: int
+    +vehicles: int
+
+    +count(vehicle: Vehicle)
+    +point_on_line(lineY, y)
+    +reset()
+}
+
+class DataFactory {
+    +modify_class_labels(dir_path, old_class, new_class)
+    +video_to_frames(video_path, output_path, n)
+}
+
+class MainGUI {
+    +analyzer
+    +gui
+    +stream_output
+
+    +change_plates_confidence()
+    +change_reading_attempts()
+    +change_tracking_depth()
+    +change_vehicle_confidence()
+    +clear_tracking()
+    +closeEvent(event)
+    +nomadAI_message(text)
+    +on_tracked_found(plate_number)
+    +on_video_processing_end()
+    +process_video()
+    +start_stream()
+    +stop_stream()
+    +toggle_boxes()
+    +toggle_class_counting()
+    +toggle_classes()
+    +toggle_counting_line()
+    +toggle_id()
+    +toggle_lane_counting()
+    +toggle_lanes()
+    +toggle_number_plates()
+    +toggle_total_counting()
+    +track_plate_number()
+}
+
+class StreamRecorder {
+    +out: NoneType
+    +recorded_frames: int
+    +recording: bool
+
+    +reset()
+}
+
+class Ui_MainWindow {
+    +bottom_layout
+    +boxes_checkBox
+    +centralWidget
+    +class_counting_checkBox
+    +clear_tracking_pushButton
+    +counting_line_checkBox
+    +drawing_groupBox
+    +generate_statistics_checkBox
+    +gridLayout
+    +groupBox
+    +horizontalLayout
+    +horizontalLayout_2
+    +horizontalLayout_3
+    +id_checkBox
+    +image_layout
+    +label
+    +label_2
+    +label_3
+    +label_4
+    +lane_counting_checkBox
+    +lanes_checkBox
+    +layoutWidget
+    +layoutWidget2
+    +layoutWidget3
+    +layoutWidget4
+    +layoutWidget5
+    +layoutWidget6
+    +menubar
+    +number_plates_checkBox
+    +parameters_groupBox
+    +plates_confidence_spinBox
+    +process_video_pushButton
+    +reading_attempts_spinBox
+    +right_layout
+    +start_stream_pushButton
+    +statusbar
+    +stop_stream_pushButton
+    +stream_input_lineEdit
+    +streaming_groupBox
+    +streaming_groupBox_2
+    +total_counting_checkBox
+    +track_plate_pushButton
+    +track_plate_lineEdit
+    +tracking_depth_spinBox
+    +tracked_plate_id_lineEdit
+    +vehicles_confidence_spinBox
+    +verticalLayout
+    +verticalLayout_2
+    +verticalLayout_3
+    +verticalLayout_4
+    +verticalLayout_5
+    +verticalLayout_6
+    +video_input_lineEdit
+    +video_output_lineEdit
+
+    +retranslateUi(MainWindow)
+    +setupUi(MainWindow)
+}
+
+class Vehicle {
+    +class_id: NoneType
+    +frame_depth: int
+    +id
+    +is_counted: bool
+    +number_plate: NoneType
+    +reading_attempts: int
+    +tracked_and_found: bool
+    +x1
+    +x2
+    +y1
+    +y2
+}
+
+Analyzer -> Counter
+MainGUI --> Analyze
+Analyzer --> StreamRecorder
+Analyzer ---> Vehicle
+MainGUI -* Ui_MainWindow
+@enduml
